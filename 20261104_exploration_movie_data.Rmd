@@ -9,12 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(ggplot2)
+library(ggplot2movies)
 ```
 
 # Movie dataset
 - 
 
 ```{r}
-
-
+movies
 ```
