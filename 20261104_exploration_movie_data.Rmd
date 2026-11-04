@@ -1,18 +1,22 @@
 ---
-title: "overview_movie_dataset"
-author: "Sanne Bekkering"
+title: "1st_exploration_movie_dataset"
+author: "Group 2: Kavish, Luisa, Marlene & Sanne"
 date: "2026-11-04"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library setup}
+#install.packages("ggplot2") # in case someone doesn't have it yet
 
 library(ggplot2)
 library(ggplot2movies)
 ```
 
-# Movie dataset
+# Movie dataset initial exploration
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
@@ -29,11 +33,7 @@ The data contains:
   - MPAA rating
   - Genre (action, animation, comedy, drama, documentary, romance, short)
   
-
-```{r}
-movies
+```{r initial exploration}
+head(movies)
 dim(movies)
 ```
-
-
-
