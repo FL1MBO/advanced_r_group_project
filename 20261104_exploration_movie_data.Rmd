@@ -1,0 +1,39 @@
+---
+title: "1st_exploration_movie_dataset"
+author: "Group 2: Kavish, Luisa, Marlene & Sanne"
+date: "2026-11-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library setup}
+#install.packages("ggplot2") # in case someone doesn't have it yet
+
+library(ggplot2)
+library(ggplot2movies)
+```
+
+# Movie dataset initial exploration
+
+[link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
+
+The data contains:
+- 58,788 movies (rows)
+- 24 columns: 
+  - Movie title 
+  - Year
+  - Length (minutes)
+  - Budget
+  - Rating
+  - Votes
+  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
+  - MPAA rating
+  - Genre (action, animation, comedy, drama, documentary, romance, short)
+  
+```{r initial exploration}
+head(movies)
+dim(movies)
+```
