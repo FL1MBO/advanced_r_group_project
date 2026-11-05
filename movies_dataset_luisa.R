@@ -1,4 +1,5 @@
-install.packages("ggplot2movies")
-
 library(ggplot2movies)
 
+movies <- as.tibble(ggplot2movies::movies) %>% 
+  na.omit() %>% 
+  
