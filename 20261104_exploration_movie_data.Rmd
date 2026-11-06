@@ -27,6 +27,30 @@ head(movies)
 dim(movies)
 ```
 
+## Summary statistics
+
+In the following table, basic statistics for the relevant numerical variables in the dataset are summarised
+
+```{r}
+movies %>% 
+  select(2:6) %>% 
+  pivot_longer(everything(), 
+               names_to = "variable", 
+               values_to ="value") %>%
+  group_by(variable) %>% 
+  summarise(
+    Mean = mean(value, na.rm = TRUE),
+    Minimum = min(value, na.rm = TRUE),
+    Maximum = max(value, na.rm = TRUE),
+    Missing = sum(is.na(value))) %>% 
+  gt() %>% 
+  fmt_number(columns = c(Mean, Minimum, Maximum, Missing),
+             decimals = 2) %>%
+  tab_header(
+    title = "Movied - Summary statistics"
+  )
+```
+
 ## Visualize data distributions
 
 The distribution of each relevant numerical variable can be visualized in the following density graphs. These are: year, length, budget, rating, and number of votes.
@@ -57,3 +81,5 @@ movies %>%
   theme(legend.position = "none")
 
 ```
+
+!! I didn't include the r1:r10 columns in these initial stuff, but I can do it, either together with these or separately !!
