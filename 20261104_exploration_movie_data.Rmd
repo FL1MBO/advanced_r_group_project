@@ -20,20 +20,40 @@ library(ggplot2movies)
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
-The data contains:
-- 58,788 movies (rows)
-- 24 columns: 
-  - Movie title 
-  - Year
-  - Length (minutes)
-  - Budget
-  - Rating
-  - Votes
-  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
-  - MPAA rating
-  - Genre (action, animation, comedy, drama, documentary, romance, short)
-  
+The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
+
 ```{r initial exploration}
 head(movies)
 dim(movies)
+```
+
+## Visualize data distributions
+
+The distribution of each relevant numerical variable can be visualized in the following density graphs. These are: year, length, budget, rating, and number of votes.
+
+```{r}
+
+movies %>% 
+  pivot_longer(
+  cols = 2:6,   
+  names_to = "variable",      
+  values_to = "value"         
+) %>% 
+  ggplot(aes(x = value, fill = variable, colour = variable)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(
+    ~ variable, 
+    scales = "free",
+  labeller = as_labeller(c(
+    "year" = "Year",
+    "length"= "Length",
+    "budget"= "Budget",
+    "rating"= "Rating",
+    "votes"= "Number of votes"))) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = NULL, y = "Density") +
+  theme_minimal(base_size = 12) + 
+  theme(legend.position = "none")
+
 ```
