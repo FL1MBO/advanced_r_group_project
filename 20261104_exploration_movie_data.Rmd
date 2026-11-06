@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(ggplot2)
+library(tidyverse)
 library(ggplot2movies)
 ```
 
@@ -31,8 +31,31 @@ The data contains:
   
 
 ```{r}
-movies
+# This loads in the data from the package with the name "movies",
+# But sometimes takes a while 
+data("movies", package = "ggplot2movies")
+
+# Alternative: 
+movies <- movies
+
+# Check data
 dim(movies)
+glimpse(movies)
+class(movies)
+
+# Remove whitespaces but retain the tibble format 
+movies <- map(movies, ~str_trim(.x)) %>% as_tibble()
+```
+## Data manipulation
+
+We have 10 rows for the rating (r1 - r10)
+
+We have 7 rows indicating the genre of a movie, movies can have multiple genres. 
+
+Create subsets based on the movie genres 
+
+```{r}
+movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", values_to = "genre_no_yes")
 ```
 
 
