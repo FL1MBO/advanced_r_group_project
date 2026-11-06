@@ -49,7 +49,6 @@ movies <- movies
 #The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
 
 ## Data initial exploration
-```
 head(movies)
 dim(movies)
 glimpse(movies)
