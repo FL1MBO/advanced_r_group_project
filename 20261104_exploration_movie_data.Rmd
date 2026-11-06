@@ -20,7 +20,6 @@ library(ggplot2movies)
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
-<<<<<<< HEAD
 The data contains:
 - 58,788 movies (rows)
 - 24 columns: 
