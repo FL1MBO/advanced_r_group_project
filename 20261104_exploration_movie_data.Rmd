@@ -27,7 +27,7 @@ head(movies)
 dim(movies)
 ```
 
-## Data cleanup 
+## Data cleanup
 
 -   make a genre column instead of different columns for what is essentially the same variable
 
