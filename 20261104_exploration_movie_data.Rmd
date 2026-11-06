@@ -27,6 +27,16 @@ head(movies)
 dim(movies)
 ```
 
+## Data cleanup 
+
+-   make a genre column instead of different columns for what is essentially the same variable
+
+-   remove all whitespaces so they're counted
+
+```{r}
+
+```
+
 ## Summary statistics
 
 In the following table, basic statistics for the relevant numerical variables in the dataset are summarised
@@ -82,4 +92,4 @@ movies %>%
 
 ```
 
-!! I didn't include the r1:r10 columns in these initial stuff, but I can do it, either together with these or separately !!
+!! I didn't include the r1:r10 columns in this initial stuff, but I can do it, either together with these or separately !!
