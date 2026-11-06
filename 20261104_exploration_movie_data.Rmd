@@ -20,6 +20,7 @@ library(ggplot2movies)
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
+<<<<<<< HEAD
 The data contains:
 - 58,788 movies (rows)
 - 24 columns: 
@@ -44,6 +45,11 @@ data("movies", package = "ggplot2movies")
 movies <- movies
 
 # Check data
+
+#The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
+
+## Data initial exploration
+```
 head(movies)
 dim(movies)
 glimpse(movies)
@@ -63,3 +69,70 @@ Create subsets based on the movie genres
 ```{r}
 movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", values_to = "genre_no_yes")
 ```
+
+## Data cleanup
+
+-   make a genre column instead of different columns for what is essentially the same variable
+
+-   remove all whitespaces so they're counted
+
+```{r}
+
+```
+
+## Summary statistics
+
+In the following table, basic statistics for the relevant numerical variables in the dataset are summarised
+
+```{r}
+movies %>% 
+  select(2:6) %>% 
+  pivot_longer(everything(), 
+               names_to = "variable", 
+               values_to ="value") %>%
+  group_by(variable) %>% 
+  summarise(
+    Mean = mean(value, na.rm = TRUE),
+    Minimum = min(value, na.rm = TRUE),
+    Maximum = max(value, na.rm = TRUE),
+    Missing = sum(is.na(value))) %>% 
+  gt() %>% 
+  fmt_number(columns = c(Mean, Minimum, Maximum, Missing),
+             decimals = 2) %>%
+  tab_header(
+    title = "Movied - Summary statistics"
+  )
+```
+
+## Visualize data distributions
+
+The distribution of each relevant numerical variable can be visualized in the following density graphs. These are: year, length, budget, rating, and number of votes.
+
+```{r}
+
+movies %>% 
+  pivot_longer(
+  cols = 2:6,   
+  names_to = "variable",      
+  values_to = "value"         
+) %>% 
+  ggplot(aes(x = value, fill = variable, colour = variable)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(
+    ~ variable, 
+    scales = "free",
+  labeller = as_labeller(c(
+    "year" = "Year",
+    "length"= "Length",
+    "budget"= "Budget",
+    "rating"= "Rating",
+    "votes"= "Number of votes"))) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = NULL, y = "Density") +
+  theme_minimal(base_size = 12) + 
+  theme(legend.position = "none")
+
+```
+
+###!! I didn't include the r1:r10 columns in this initial stuff, but I can do it, either together with these or separately !!
