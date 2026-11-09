@@ -41,6 +41,8 @@ head(movies)
 dim(movies)
 ```
 
+Introduced a new dataset: clean_movies, introduced genre column (with double genre listed movies under 0 for now), removed budget and mpaa. Then made two initial plots and working on a third.
+
 ```{r summary plots & cleaning}
 movies |> drop_na("budget") |> nrow() # 5215 of 58788, thus remove column unless interested in budget
 # mpaa is not present for all, thus it is not a useful variable and removed
@@ -62,6 +64,11 @@ clean_movies <- movies |>
                            Romance == 1 ~ 6))
   
 ```
+
+
+# Plot 1
+
+*the ranking of the movies (points) by year and colored by their genre*
 
 ```{r}
 genre_levels <- c("NA", "0", "1", "2", "3", "4", "5", "6")
@@ -109,6 +116,10 @@ plot1 <- clean_movies|>
 plot1
 ```
 
+# Plot 2
+
+*Histogram of the movies per 5 years, with coloring by genre, thus you can see the proportions of each genre. Since the first movie is from 1893, I am assuming it is not taking the right 5 year steps, so that's what I am working on*
+
 ```{r}
 genre_levels <- c("NA", "0", "1", "2", "3", "4", "5", "6")
 
@@ -139,7 +150,7 @@ plot2 <- clean_movies|>
   mutate(genre = fct_na_value_to_level(
       factor(genre, levels = genre_levels),
       level = "NA")) |>
-  filter(votes >= 100) |>
+  filter(votes >= 100) |>     # just to see how that changes things
   ggplot(aes(x = year, fill = genre)) + 
   geom_histogram(binwidth = 5, ) +
   scale_fill_manual(breaks = genre_levels, 
@@ -151,6 +162,9 @@ plot2 <- clean_movies|>
 
 plot2
 ```
+
+# Plot 3
+*WIP, wanted to plot votes per year, so introducing a new variable for that*
 
 ```{r}
 # plot3 <- clean_movies |> 
