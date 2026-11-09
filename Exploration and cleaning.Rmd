@@ -152,4 +152,28 @@ plot2 <- clean_movies|>
       level = "NA")) |>
   filter(votes >= 100) |>     # just to see how that changes things
   ggplot(aes(x = year, fill = genre)) + 
-  geom_histogram(b
+  geom_histogram(binwidth = 5, ) +
+  scale_fill_manual(breaks = genre_levels, 
+                    labels = genre_labels,
+                    values = genre_colors) +
+  scale_x_continuous(
+    breaks = c(1895, 1905, 1915, 1925, 1935, 1945,1955,1965, 1975, 1985, 1995, 2005)) +
+  theme_minimal()
+
+plot2
+```
+
+# Plot 3
+*WIP, wanted to plot votes per year, so introducing a new variable for that*
+
+```{r}
+# plot3 <- clean_movies |> 
+#  mutate(votes_per_year = |>
+#  ggplot(aes(x = year, y = summarise(votes)) + 
+#  geom_line() +
+#  scale_x_continuous(
+#    breaks = c(1895, 1905, 1915, 1925, 1935, 1945,1955,1965, 1975, 1985, 1995, 2005)) +
+#  theme_minimal()
+
+# plot3
+```
