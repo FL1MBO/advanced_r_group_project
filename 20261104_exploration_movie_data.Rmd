@@ -20,19 +20,7 @@ library(ggplot2movies)
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
-The data contains:
-- 58,788 movies (rows)
-- 24 columns: 
-  - Movie title 
-  - Year
-  - Length (minutes)
-  - Budget
-  - Rating
-  - Votes
-  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
-  - MPAA rating
-  - Genre (action, animation, comedy, drama, documentary, romance, short)
-  
+The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
 
 ```{r, Load in data}
 
@@ -56,13 +44,14 @@ class(movies)
 # Remove whitespaces but retain the tibble format 
 movies <- map(movies, ~str_trim(.x)) %>% as_tibble()
 ```
+
 ## Data manipulation
 
 We have 10 rows for the rating (r1 - r10)
 
-We have 7 rows indicating the genre of a movie, movies can have multiple genres. 
+We have 7 rows indicating the genre of a movie, movies can have multiple genres.
 
-Create subsets based on the movie genres 
+Create subsets based on the movie genres
 
 ```{r}
 movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", values_to = "genre_no_yes")
