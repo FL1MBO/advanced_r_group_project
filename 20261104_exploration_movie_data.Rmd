@@ -29,7 +29,7 @@ online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.
 
 There are various ways to use the data from this package. We can load it
 as `ggplot2movies::movies`, however, this does not store it as a
-variabele in our environment. So, we can assign it to a variable or we
+variabel in our environment. So, we can assign it to a variable or we
 can load it using `data` to store it as a variable
 
 ```{r, Load in data}
