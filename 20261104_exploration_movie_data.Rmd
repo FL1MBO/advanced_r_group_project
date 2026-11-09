@@ -3,6 +3,9 @@ title: "1st_exploration_movie_dataset"
 author: "Group 2: Kavish, Luisa, Marlene & Sanne"
 date: "2026-11-04"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -18,23 +21,41 @@ library(ggplot2movies)
 
 # Movie dataset initial exploration
 
-[link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
+This dataset is taken from the package `ggplot2movies`. [link to the
+description
+online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
+
 
 The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
 
+## The data
+
+There are various ways to use the data from this package. We can load it
+as `ggplot2movies::movies`, however, this does not store it as a
+variabele in our environment. So, we can assign it to a variable or we
+can load it using `data` to store it as a variable
+>>>>>>> 5682236cda3f2d8136de397b8f2e998386e05ef2
+
 ```{r, Load in data}
 
+ggplot2movies::movies
+
+# Store the data in the environment
+movies <- ggplot2movies::movies
+
 # This loads in the data from the package with the name "movies",
-# But sometimes takes a while 
 data("movies", package = "ggplot2movies")
+# But sometimes takes a while 
+```
 
-# Alternative: 
-movies <- movies
+## Data exploration
 
-# Check data
+The data contains: - 58,788 movies (rows) - 24 columns: - Movie title -
+Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile
+per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action,
+animation, comedy, drama, documentary, romance, short)
 
-#The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
-
+```{r}
 ## Data initial exploration
 head(movies)
 dim(movies)
@@ -46,10 +67,58 @@ movies <- map(movies, ~str_trim(.x)) %>% as_tibble()
 ```
 
 ## Data manipulation
-
-We have 10 rows for the rating (r1 - r10)
+The variable "budget" contains many `NAs`, the variable "mpaa" also
+contains a lot of empty characters. The genre variables appear to be
+binary, but are loaded in as integers.
 
 We have 7 rows indicating the genre of a movie, movies can have multiple genres.
+
+## Analysis plan
+
+- We have a group of variables for the distribution of the rating.
+- We have a group of variables for the genres.
+- We have ratings and the number of votes.
+- We have budget (but lots of NAs)
+- We have movie lengths (in minutes)
+
+It would be interesting to see the distribution of the ranks, in
+relation to the number of voters. Then, we also have the information on
+which year the movie was released.
+
+**Ranks**
+
+- How are the votes distributed (across the r1-10)?
+- Can movie length predict scores + how many people watched it.
+
+**Genre**
+
+It would also be interesting to look at the popularity of the genres:
+
+- Which movie genres has the highest overall scores?
+- Which movie genre is voted on most (mean across the movies, min + max)
+- How long are movies across genres (and does this influence the rank?)
+
+**Decades**
+
+Lastly, we can group per decade
+
+- Which genres were popular along the decades?
+- How many votes were there across the decades?
+- Ratings across the decades? (overall, per genre)
+- Did movie lengths change over the years?
+
+These graphs can all be made interactive, with options for choosing
+genres and decades, perhaps also with the possibility to select
+double/triple genres (we will look into the distribution of multiple
+genres), or to select certain years even (along with certain decades).
+
+- Perhaps make it possible to select your own range of release years.
+
+### Data manipulation
+
+- We have 10 rows for the rating (r1 - r10)
+- We have 7 rows indicating the genre of a movie, movies can have
+  multiple genres.
 
 Create subsets based on the movie genres
 
@@ -59,9 +128,9 @@ movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", 
 
 ## Data cleanup
 
--   make a genre column instead of different columns for what is essentially the same variable
-
--   remove all whitespaces so they're counted
+- make a genre column instead of different columns for what is
+  essentially the same variable
+- remove all whitespaces so they're counted
 
 ```{r}
 
@@ -69,7 +138,8 @@ movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", 
 
 ## Summary statistics
 
-In the following table, basic statistics for the relevant numerical variables in the dataset are summarised
+In the following table, basic statistics for the relevant numerical
+variables in the dataset are summarised
 
 ```{r}
 movies %>% 
@@ -93,7 +163,9 @@ movies %>%
 
 ## Visualize data distributions
 
-The distribution of each relevant numerical variable can be visualized in the following density graphs. These are: year, length, budget, rating, and number of votes.
+The distribution of each relevant numerical variable can be visualized
+in the following density graphs. These are: year, length, budget,
+rating, and number of votes.
 
 ```{r}
 
@@ -122,4 +194,14 @@ movies %>%
 
 ```
 
-###!! I didn't include the r1:r10 columns in this initial stuff, but I can do it, either together with these or separately !!
+**!! I didn't include the r1:r10 columns in this initial stuff, but I
+can do it, either together with these or separately !!**
+
+## Regression
+
+```{r}
+fit1 <- lm(rating ~ votes, data=ggplot2movies::movies) 
+# Running it with saved data took long, so I would keep it like this
+summary(fit1)
+plot(fit1)
+```
