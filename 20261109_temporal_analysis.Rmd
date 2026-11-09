@@ -1,0 +1,106 @@
+---
+title: "20261109_temporal_analysis"
+author: "Sanne Bekkering"
+date: "2026-11-09"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(ggplot2movies)
+```
+
+# Temporal analysis
+
+Overview - Data
+
+## Data manipulation
+
+```{r}
+movies <- ggplot2movies::movies
+
+# A cutoff of on the first quartile
+cutoff_votes <- 0
+
+# Change the datatype 
+clean_movies <- movies |>   
+  map(~str_trim(.x)) |>   
+  as_tibble() |> 
+  select(-budget, -mpaa) |> 
+  mutate_at(vars(-title), as.numeric) |>  
+  mutate( as_date("%Y")) |> 
+  filter(votes >= cutoff_votes) 
+  
+class(clean_movies)
+
+summary(clean_movies$year)
+```
+
+The dates of the movies range from 1893 - 2005.
+
+We can create a range in intervals of 5 to 10 years.
+
+Decades:
+
+- 1893 -1899 (7 years)
+- 1900 - 1909
+- 1910 - 1919
+- 1920 - 1929
+- 1930 - 1939
+- 1940 - 1949
+- 1950 - 1959
+- 1960 - 1969
+- 1970 - 1979
+- 1980 - 1989
+- 1990 - 1999
+- 2000 - 2005 (5 years)
+
+```{r}
+ggplot(clean_movies, aes(year, rating)) + 
+  geom_point()
+
+clean_movies <- clean_movies |> 
+  group_by(year) |> 
+  mutate(mean_rating = mean(rating), mean_votes = mean(votes)) 
+
+ggplot(clean_movies, aes(year, mean_rating)) + 
+  geom_line()
+
+ggplot(clean_movies, aes(year, mean_votes)) + 
+  geom_line(colour="#69b3a2") +
+  geom_point() + 
+  xlab("year of movies") +
+  ylab("number of votes (mean)")
+
+```
+
+```{r}
+apply(clean_movies, 2, plot)
+
+table(clean_movies$year)
+summary(clean_movies$year)
+```
+
+```{r}
+hist(clean_movies$year)
+
+ggplot(clean_movies, aes(year)) + 
+  geom_bar(fill = "#69b3a2", colour = "#000000") +
+  xlab("year of movie release") +
+  ylab("number of movies")
+
+```
+
+
+```{r}
+linear_model <- lm(rating ~ year, data=clean_movies)
+summary(linear_model)
+
+plot(linear_model)
+```

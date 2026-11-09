@@ -48,7 +48,7 @@ data("movies", package = "ggplot2movies")
 
 The data contains:
 
--  58,788 movies (rows)
+- 58,788 movies (rows)
 
 - 24 columns:
 
@@ -58,7 +58,7 @@ The data contains:
   - Budget
   - Rating
   - Votes
-  -  r1-10 (percentile per score 1-10, rounded to nearest 10%)
+  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
   - MPAA rating
   - Genre (action, animation, comedy, drama, documentary, romance,
     short)
@@ -70,8 +70,8 @@ dim(movies)
 glimpse(movies)
 class(movies)
 
-# A cutoff of 50 removes 36075 movies 
-cutoff_votes <- 50
+# A cutoff of on the first quartile
+cutoff_votes <- 0
 
 # Change the datatype 
 clean_movies <- movies |>   
@@ -82,6 +82,8 @@ clean_movies <- movies |>
   filter(votes >= cutoff_votes) 
   
 class(clean_movies)
+
+summary(clean_movies$votes)
 ```
 
 ## Data manipulation
@@ -154,6 +156,31 @@ movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", 
 
 ```{r}
 
+genres <- movies |>  select(, cols = c(Action:Short)) |>  colnames(c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance", "Short"))
+
+table(clean_movies$Action, clean_movies$Animation)
+table(clean_movies$Action, clean_movies$Comedy)
+table(clean_movies$Action, clean_movies$Drama)
+table(clean_movies$Action, clean_movies$Documentary)
+table(clean_movies$Action, clean_movies$Romance)
+
+table(clean_movies$Comedy, clean_movies$Short)
+table(clean_movies$Comedy, clean_movies$Short)
+table(clean_movies$Comedy, clean_movies$Short)
+table(clean_movies$Action, clean_movies$Short)
+
+table(clean_movies$Action, clean_movies$Documentary)
+table(clean_movies$Comedy, clean_movies$Romance)
+
+table(clean_movies$Drama, clean_movies$Romance)
+
+table(clean_movies$Action, clean_movies$Short)
+table(clean_movies$Animation, clean_movies$Short)
+table(clean_movies$Drama, clean_movies$Short)
+table(clean_movies$Documentary, clean_movies$Short)
+table(clean_movies$Romance, clean_movies$Short)
+
+
 ```
 
 ## Summary statistics
@@ -177,7 +204,7 @@ movies %>%
   fmt_number(columns = c(Mean, Minimum, Maximum, Missing),
              decimals = 2) %>%
   tab_header(
-    title = "Movied - Summary statistics"
+    title = "Movies - Summary statistics"
   )
 ```
 
