@@ -1,6 +1,6 @@
 ---
-title: "overview_movie_dataset"
-author: "Sanne Bekkering"
+title: "1st_exploration_movie_dataset"
+author: "Group 2: Kavish, Luisa, Marlene & Sanne"
 date: "2026-11-04"
 output: html_document
 editor_options: 
@@ -10,12 +10,16 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library setup}
+#install.packages("ggplot2") # in case someone doesn't have it yet
 
 library(tidyverse)
 library(ggplot2movies)
 ```
 
-# Movie dataset
+# Movie dataset initial exploration
 
 This dataset is taken from the package `ggplot2movies`. [link to the
 description
@@ -25,10 +29,11 @@ online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.
 
 There are various ways to use the data from this package. We can load it
 as `ggplot2movies::movies`, however, this does not store it as a
-variabele in our environment. So, we can assign it to a variable or we
-can load it using `data` to store it as a variable
+variable in our environment. So, we can assign it to a variable or we
+can load it using `data` to store it as a variable.
 
-```{r}
+```{r, Load in data}
+
 ggplot2movies::movies
 
 # Store the data in the environment
@@ -36,29 +41,57 @@ movies <- ggplot2movies::movies
 
 # This loads in the data from the package with the name "movies",
 data("movies", package = "ggplot2movies")
-# But sometimes takes a while 
+# But sometimes takes a while
 ```
 
 ## Data exploration
 
-The data contains: - 58,788 movies (rows) - 24 columns: - Movie title -
-Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile
-per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action,
-animation, comedy, drama, documentary, romance, short)
+The data contains:
+
+-  58,788 movies (rows)
+
+- 24 columns:
+
+  - Movie title
+  - Year
+  - Length (minutes)
+  - Budget
+  - Rating
+  - Votes
+  -  r1-10 (percentile per score 1-10, rounded to nearest 10%)
+  - MPAA rating
+  - Genre (action, animation, comedy, drama, documentary, romance,
+    short)
 
 ```{r}
-# Check data
+## Data initial exploration
+head(movies)
 dim(movies)
 glimpse(movies)
 class(movies)
 
-# Remove whitespaces but retain the tibble format 
-movies <- map(movies, ~str_trim(.x)) %>% as_tibble()
+# A cutoff of 50 removes 36075 movies 
+cutoff_votes <- 50
+
+# Change the datatype 
+clean_movies <- movies |>   
+  map(~str_trim(.x)) |>   
+  as_tibble() |> 
+  select(-budget, -mpaa) |> 
+  mutate_at(vars(-title), as.numeric) |>  
+  filter(votes >= cutoff_votes) 
+  
+class(clean_movies)
 ```
+
+## Data manipulation
 
 The variable "budget" contains many `NAs`, the variable "mpaa" also
 contains a lot of empty characters. The genre variables appear to be
 binary, but are loaded in as integers.
+
+We have 7 rows indicating the genre of a movie, movies can have multiple
+genres.
 
 ## Analysis plan
 
@@ -100,7 +133,6 @@ double/triple genres (we will look into the distribution of multiple
 genres), or to select certain years even (along with certain decades).
 
 - Perhaps make it possible to select your own range of release years.
-- Perhaps make it possible to select your own range of release years.
 
 ### Data manipulation
 
@@ -113,6 +145,77 @@ Create subsets based on the movie genres
 ```{r}
 movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", values_to = "genre_no_yes")
 ```
+
+## Data cleanup
+
+- make a genre column instead of different columns for what is
+  essentially the same variable
+- remove all whitespaces so they're counted
+
+```{r}
+
+```
+
+## Summary statistics
+
+In the following table, basic statistics for the relevant numerical
+variables in the dataset are summarised
+
+```{r}
+movies %>% 
+  select(2:6) %>% 
+  pivot_longer(everything(), 
+               names_to = "variable", 
+               values_to ="value") %>%
+  group_by(variable) %>% 
+  summarise(
+    Mean = mean(value, na.rm = TRUE),
+    Minimum = min(value, na.rm = TRUE),
+    Maximum = max(value, na.rm = TRUE),
+    Missing = sum(is.na(value))) %>% 
+  gt() %>% 
+  fmt_number(columns = c(Mean, Minimum, Maximum, Missing),
+             decimals = 2) %>%
+  tab_header(
+    title = "Movied - Summary statistics"
+  )
+```
+
+## Visualize data distributions
+
+The distribution of each relevant numerical variable can be visualized
+in the following density graphs. These are: year, length, budget,
+rating, and number of votes.
+
+```{r}
+
+movies %>% 
+  pivot_longer(
+  cols = 2:6,   
+  names_to = "variable",      
+  values_to = "value"         
+) %>% 
+  ggplot(aes(x = value, fill = variable, colour = variable)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(
+    ~ variable, 
+    scales = "free",
+  labeller = as_labeller(c(
+    "year" = "Year",
+    "length"= "Length",
+    "budget"= "Budget",
+    "rating"= "Rating",
+    "votes"= "Number of votes"))) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = NULL, y = "Density") +
+  theme_minimal(base_size = 12) + 
+  theme(legend.position = "none")
+
+```
+
+**!! I didn't include the r1:r10 columns in this initial stuff, but I
+can do it, either together with these or separately !!**
 
 ## Regression
 
