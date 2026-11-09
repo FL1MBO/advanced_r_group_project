@@ -99,7 +99,8 @@ genres and decades, perhaps also with the possibility to select
 double/triple genres (we will look into the distribution of multiple
 genres), or to select certain years even (along with certain decades).
 
--  Perhaps make it possible to select your own range of release years.
+- Perhaps make it possible to select your own range of release years.
+- Perhaps make it possible to select your own range of release years.
 
 ### Data manipulation
 
