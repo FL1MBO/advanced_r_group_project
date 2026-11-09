@@ -25,12 +25,16 @@ This dataset is taken from the package `ggplot2movies`. [link to the
 description
 online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
+
+The data contains: - 58,788 movies (rows) - 24 columns: - Movie title - Year - Length (minutes) - Budget - Rating - Votes - r1-10 (percentile per score 1-10, rounded to nearest 10%) - MPAA rating - Genre (action, animation, comedy, drama, documentary, romance, short)
+
 ## The data
 
 There are various ways to use the data from this package. We can load it
 as `ggplot2movies::movies`, however, this does not store it as a
 variabel in our environment. So, we can assign it to a variable or we
 can load it using `data` to store it as a variable
+>>>>>>> 5682236cda3f2d8136de397b8f2e998386e05ef2
 
 ```{r, Load in data}
 
@@ -62,9 +66,12 @@ class(movies)
 movies <- map(movies, ~str_trim(.x)) %>% as_tibble()
 ```
 
+## Data manipulation
 The variable "budget" contains many `NAs`, the variable "mpaa" also
 contains a lot of empty characters. The genre variables appear to be
 binary, but are loaded in as integers.
+
+We have 7 rows indicating the genre of a movie, movies can have multiple genres.
 
 ## Analysis plan
 
