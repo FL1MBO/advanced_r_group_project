@@ -25,13 +25,18 @@ ui <- page_sidebar(
   checkboxInput(
     "votes",
     "Scale ratings based on number of votes",
-    value = FALSE
-  ),
+    value = FALSE),
   checkboxInput(
     "number_movies",
     "Scale ratings based on number of movies released",
-    value = FALSE
-  )),
+    value = FALSE),
+  checkboxGroupInput(
+    "genre",
+    label = "Choose a genre (a movie can have multiple genres)",
+    choices = list("Action" = 1, "Animation" = 2, "Comedy" = 3, "Drama" = 4, "Documentary" = 5, "Romance" = 6),
+    selected = c(1, 2, 3, 4, 5, 6)
+  )
+  ),
   navset_card_underline(
     title = "Visualizations",
     
