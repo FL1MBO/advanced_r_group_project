@@ -154,34 +154,6 @@ movies_long <- pivot_longer(movies, cols = c(Action:Short), names_to = "genre", 
   essentially the same variable
 - remove all whitespaces so they're counted
 
-```{r}
-
-genres <- movies |>  select(, cols = c(Action:Short)) |>  colnames(c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance", "Short"))
-
-table(clean_movies$Action, clean_movies$Animation)
-table(clean_movies$Action, clean_movies$Comedy)
-table(clean_movies$Action, clean_movies$Drama)
-table(clean_movies$Action, clean_movies$Documentary)
-table(clean_movies$Action, clean_movies$Romance)
-
-table(clean_movies$Comedy, clean_movies$Short)
-table(clean_movies$Comedy, clean_movies$Short)
-table(clean_movies$Comedy, clean_movies$Short)
-table(clean_movies$Action, clean_movies$Short)
-
-table(clean_movies$Action, clean_movies$Documentary)
-table(clean_movies$Comedy, clean_movies$Romance)
-
-table(clean_movies$Drama, clean_movies$Romance)
-
-table(clean_movies$Action, clean_movies$Short)
-table(clean_movies$Animation, clean_movies$Short)
-table(clean_movies$Drama, clean_movies$Short)
-table(clean_movies$Documentary, clean_movies$Short)
-table(clean_movies$Romance, clean_movies$Short)
-
-
-```
 
 ## Summary statistics
 
