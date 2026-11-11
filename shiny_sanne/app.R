@@ -11,7 +11,7 @@ ui <- page_sidebar(
   title = "Temporal analysis movie data",
   sidebar = sidebar(helpText("Movie data is presented per year"),
   sliderInput(
-    "slider1",
+    "range",
     "Set the range of year of movie release:",
     min = 1893,
     max = 2005,
@@ -39,8 +39,8 @@ server <- function(input, output){
   })
   output$table <- renderTable(movies_per_decade)
   output$plot_year <- renderPlot(
-    {
-      ggplot(movies, aes(year, mean_rating)) + 
+    { movies |> filter(year >= input$range[1], year <= input$range[2]) |>  
+      ggplot(aes(year, mean_rating)) + 
         geom_line() +
         xlab("year of movie release") +
         ylab("mean rating") + scale_x_continuous(breaks = seq(1890, 2010, 10))
