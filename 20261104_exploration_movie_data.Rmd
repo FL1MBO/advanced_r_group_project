@@ -7,6 +7,15 @@ editor_options:
   markdown: 
     wrap: 72
 ---
+---
+title: "1st_exploration_movie_dataset"
+author: "Group 2: Kavish, Luisa, Marlene & Sanne"
+date: "2026-11-04"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -179,6 +188,7 @@ movies %>%
   )
 ```
 
+
 ## Visualize data distributions
 
 The distribution of each relevant numerical variable can be visualized
@@ -187,9 +197,10 @@ rating, and number of votes.
 
 ```{r}
 
-movies %>% 
+density_distributions <- 
+  clean_movies %>% 
   pivot_longer(
-  cols = 2:6,   
+  cols = 2:5,   
   names_to = "variable",      
   values_to = "value"         
 ) %>% 
@@ -198,28 +209,163 @@ movies %>%
   facet_wrap(
     ~ variable, 
     scales = "free",
+    strip.position = c("bottom"),
   labeller = as_labeller(c(
     "year" = "Year",
-    "length"= "Length",
-    "budget"= "Budget",
+    "length"= "Length (min)",
     "rating"= "Rating",
     "votes"= "Number of votes"))) +
   scale_fill_brewer(palette = "Set2") +
   scale_color_brewer(palette = "Set2") +
   labs(x = NULL, y = "Density") +
   theme_minimal(base_size = 12) + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        strip.placement = "outside")
 
+plot(density_distributions)
 ```
+```
+## Visualize rating patterns
 
-**!! I didn't include the r1:r10 columns in this initial stuff, but I
-can do it, either together with these or separately !!**
-
-## Regression
+We consider the 100 movies with the highest average rating and plot in a
+heatmap the percentage of votes awarding 1-10 ratings. This will
+visualize whether these top-rated movies have similar distribution
+between rating points.
 
 ```{r}
-fit1 <- lm(rating ~ votes, data=ggplot2movies::movies) 
-# Running it with saved data took long, so I would keep it like this
-summary(fit1)
-plot(fit1)
+library(superheat)
+
+heatmap_rating <- 
+  clean_movies %>% 
+  select(title, rating, r1:r10) %>% 
+  arrange(desc(rating)) %>% 
+  slice_head(n = 100) %>% 
+  {
+    matrix_rating <- as.matrix(select(., r1:r10))
+    rownames(matrix_rating) <- .$title
+    superheat(
+      matrix_rating,
+      pretty.order.rows = FALSE,        
+      yr = .$rating,                  
+      yr.plot.type = "bar",
+      yr.axis.name = "Average Rating",
+      yr.bar.col = "lightblue4",
+      heat.col.scheme = "viridis",
+      grid.hline.col = "white",
+      grid.vline.col = "white",
+      left.label.text.size = 2.5,
+      bottom.label.text.angle = 0
+    )
+  }
+```
+### Impact of votes on rating
+
+We want to investigate whether the total number of votes can predict the
+average rating of a movie. We do this by fitting a linear model to the
+data using votes as a predictor of rating.
+
+```{r}
+fit_votes <- 
+  lm(rating ~ 1 + votes, 
+     data = clean_movies) 
+
+summary(fit_votes)
+
+# Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers
+plot_lm_votes <- fit_votes %>% 
+  {par(mfrow = c(2, 2));
+    plot(.)}
+```
+
+Although the slope shows a low p-value, the adjusted R^2^ is low
+(0.03139). The diagnostic plots indicate that the data may be not
+linearly distributed or homoscedatic. We can try to fit a better model
+using a log transformation.
+
+```{r}
+fit_votes_log <- 
+  lm(rating ~ 1 + log(votes), 
+     data = clean_movies) 
+
+summary(fit_votes_log)
+
+# Compare the adjusted R^2 of both models
+summary(fit_votes_log)$adj.r.squared - 
+  summary(fit_votes)$adj.r.squared   #log-transformed is higher
+
+# Calculate Akaike's ‘An Information Criterion’ for both models
+AIC(fit_votes, fit_votes_log) 
+```
+
+When we log-transform the votes variable, we obtain a slightly higher
+adjusted R^2^ (0.04227) and the model is better according to the AIC
+metric. Even if it remains weak, the correlation between amount of votes
+and rating is better explained by this second model.
+
+We can visualize the two predicted fit lines on the data in a scatter
+plot of average rating against number of votes. Here, the votes are
+colored by the percentage of users who awarded a 10/10 rate.
+
+```{r}
+
+votes_rating_plot <- ggplot(
+  clean_movies, 
+      aes(votes, rating)) +
+      geom_point(aes(color = r10)) +
+  labs(dictionary = c(
+    votes = "Total user votes",
+    rating = "Average rating /10",
+    r10 = "Percentage of 10/10 votes")) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + x, 
+              se = FALSE, 
+              color = "orange3", 
+              linetype = 1) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + log(x), 
+              se = FALSE, 
+              color = "red3", 
+              linetype = 1) + 
+  scale_color_viridis_c()
+
+print(votes_rating_plot)
+```
+#### Impact of 10/10 votes on average rating
+
+We also investigate whether the percentage of users who awarded a 10/10
+rating (r10 variable) can predict the average rating of a movie.
+
+```{r}
+fit_r10 <- 
+  lm(rating ~ 1 + r10, 
+     data = clean_movies) 
+
+summary(fit_r10)
+
+# Visualise diagnostic plots of the linear model in one figure
+plot_lm_r10 <- fit_r10 %>% 
+  {par(mfrow = c(2, 2));
+    plot(.)}
+# no clear violations of the requirements
+```
+
+The low p-value and adjusted R^2^ of 0.1789 reveal a correlation,
+although weak, between r10 and rating. This can be visualized on the
+following scatter plot of the r10 data.
+
+```{r}
+r10_rating_plot <- ggplot(
+  clean_movies, 
+      aes(r10, rating)) +
+      geom_point() +
+  labs(dictionary = c(
+    rating = "Average rating /10",
+    r10 = "Percentage of 10/10 votes")) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + x, 
+              se = FALSE, 
+              color = "red3", 
+              linetype = 1)
+
+print(r10_rating_plot)
 ```
