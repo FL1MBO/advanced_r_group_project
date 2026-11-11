@@ -358,4 +358,7 @@ r10_rating_plot <- ggplot(
               formula = y ~ 1 + x, 
               se = FALSE, 
               color = "red3", 
-             
+              linetype = 1)
+
+print(r10_rating_plot)
+```
