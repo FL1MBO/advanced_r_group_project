@@ -142,8 +142,16 @@ plot(linear_model)
 ```
 
 
+Compute the average rating per year per genre
+
+```{r}
+
+
+```
+
 ```{r}
 runApp("shiny_sanne")
 ```
+
 
 
