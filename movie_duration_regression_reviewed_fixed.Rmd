@@ -1,0 +1,703 @@
+---
+title: "File 2: Multiple and Logistic Regression Analysis"
+author: "Group Data Analysis Project"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: readable
+    self_contained: false
+---
+
+# 1. Aim and modelling strategy
+
+File 1 explored associations between movie duration, audience ratings, film classification, genres, release year and vote counts. This document applies the regression methods from the supervised-learning lectures to two different target types:
+
+1. **Multiple linear regression:** explain variation in a continuous outcome, the average audience rating.
+2. **Binary logistic regression:** estimate the probability of a categorical outcome, the dataset's `Short` classification.
+
+The choice of model follows the target: linear regression models a continuous response, whereas logistic regression models the probability of a binary response. The models describe adjusted associations and predictive performance; neither establishes causation.
+
+The `Short` variable is an independent dataset classification, not a fixed runtime cutoff. Runtime is therefore a possible predictor of this label, not its definition. This report includes the lecture material directly relevant to these regression tasks. Other supervised-learning topics such as self-supervised pretraining, PCA workflows and neural-network interpretation are outside the scope of this particular assignment.
+
+# 2. Load packages and prepare the data
+
+We use the `ggplot2movies` dataset from File 1. Budget and MPAA are omitted from the main models because these metadata fields have substantial missingness. The same eligible movies and the same stratified training-test split are used for both modelling tasks, allowing a consistent evaluation design.
+
+```{r setup, message=FALSE, warning=FALSE}
+library(ggplot2movies)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(caret)
+
+clean_table <- function(x, caption = NULL, digits = 3) {
+  knitr::kable(
+    x,
+    format = "html",
+    caption = caption,
+    digits = digits,
+    row.names = FALSE
+  ) %>%
+    kableExtra::kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = FALSE,
+      position = "left"
+    )
+}
+
+data("movies", package = "ggplot2movies")
+movies_raw <- tibble::as_tibble(movies) %>%
+  mutate(movie_id = row_number())
+
+genres <- c(
+  "Action", "Animation", "Comedy",
+  "Documentary", "Drama", "Romance"
+)
+
+required_variables <- c(
+  "rating", "length", "year", "votes", "Short", genres
+)
+stopifnot(all(required_variables %in% names(movies_raw)))
+
+regression_data <- movies_raw %>%
+  mutate(
+    across(
+      all_of(c("rating", "length", "year", "votes", genres)),
+      ~ as.numeric(.x)
+    ),
+    Short = as.numeric(as.character(Short))
+  ) %>%
+  filter(
+    if_all(all_of(required_variables), ~ is.finite(.x)),
+    rating >= 1,
+    rating <= 10,
+    length >= 0,
+    votes >= 0,
+    Short %in% c(0, 1)
+  ) %>%
+  mutate(
+    length_60 = length / 60,
+    length_10 = length / 10,
+    # Adding one allows movies with zero votes to be retained.
+    log10_votes = log10(votes + 1),
+    film_type = factor(
+      Short,
+      levels = c(0, 1),
+      labels = c("Other film", "Short film")
+    ),
+    short_binary = Short
+  )
+
+# One stratified split, shared by the linear and logistic analyses.
+set.seed(2026)
+regression_train <- regression_data %>%
+  group_by(short_binary) %>%
+  slice_sample(prop = 0.80) %>%
+  ungroup()
+
+regression_test <- anti_join(
+  regression_data,
+  regression_train %>% select(movie_id),
+  by = "movie_id"
+)
+
+# Estimate the centring constant from training data only.
+year_center <- mean(regression_train$year)
+regression_train <- regression_train %>%
+  mutate(year_c = year - year_center)
+regression_test <- regression_test %>%
+  mutate(year_c = year - year_center)
+
+sample_description <- tibble(
+  Measure = c(
+    "Movies in original dataset",
+    "Movies retained for analysis",
+    "Training movies",
+    "Test movies",
+    "Other films in full analysis set",
+    "Short films in full analysis set",
+    "Mean release year in training set",
+    "Mean runtime in full analysis set (minutes)"
+  ),
+  Value = c(
+    nrow(movies_raw),
+    nrow(regression_data),
+    nrow(regression_train),
+    nrow(regression_test),
+    sum(regression_data$short_binary == 0),
+    sum(regression_data$short_binary == 1),
+    year_center,
+    mean(regression_data$length)
+  )
+)
+clean_table(sample_description, "Regression dataset overview", digits = 1)
+```
+
+All required analysis variables are complete in the retained dataset. Genre indicators are kept separately because a movie can belong to more than one genre. `length_60` expresses runtime in hours for the linear model; `length_10` expresses it in ten-minute units for easier logistic odds-ratio interpretation. `log10_votes` is a log-transformed vote count with a +1 offset to retain zero-vote observations; a one-unit increase is approximately a ten-fold increase for non-zero counts.
+
+The 80/20 split is stratified by `Short` so both classes are represented in the training and test sets. The test set is held aside for final evaluation and is not used to fit or choose the models. Preprocessing that requires an estimated value (centering year) is based on the training data and then applied unchanged to the test data. This avoids a basic form of data leakage: allowing information from the test set to influence model fitting or preprocessing.
+
+### R formula and variable coding
+
+The R model formula follows the syntax shown in the R practicals: the response is on the left of `~`, and predictors are on the right. The `+` operator adds predictors; `*` includes both main effects and their interaction. We use an explicit predictor list rather than `.` so that `movie_id` and any unintended columns cannot enter the model. `film_type` is a factor with `Other film` as the reference level, as categorical predictors should be encoded as factors when their numeric codes are only labels. The 0/1 genre indicators remain numeric binary predictors, and `short_binary` remains a numeric 0/1 response for the binomial GLM.
+
+The analysis uses readable object names, pipes for data preparation, a reusable `clean_table()` helper, comments explaining non-obvious choices, and `stopifnot()` to fail early if required variables are absent. These follow the R refresher's KISS, DRY, abstraction and input-checking guidelines. The regression models are ordinary R model objects; `summary()`, `anova()`, `confint()` and `predict()` are used to inspect and apply their standard methods.
+
+# 3. Multiple linear regression: explaining audience ratings
+
+## 3.1 Model idea and sequential specification
+
+The response, `rating`, is a numerical score from 1 to 10, so linear regression is a suitable starting point. With multiple predictors, the model estimates the outcome as a linear combination of those predictors. A coefficient describes the expected change in rating for a one-unit increase in that predictor, **holding the other included predictors constant**.
+
+For ordinary least-squares regression, the fitted coefficients minimise the sum of squared residuals (SSE). A residual is the observed rating minus its fitted rating. Squaring prevents positive and negative errors from cancelling and gives larger errors more weight.
+
+We fit three nested models on the training set:
+
+- **Model 1:** runtime only; an unadjusted reference relationship.
+- **Model 2:** adds release year, log-transformed vote count, film classification and the six genre indicators.
+- **Model 3:** adds an interaction between runtime and film classification to test whether the runtime-rating slope differs between short films and other films.
+
+The reference category is `Other film`. In Model 3, the `length_60` coefficient is the runtime slope for other films; the interaction coefficient is the additional slope for short films.
+
+```{r linear-models}
+linear_model_1 <- lm(
+  rating ~ length_60,
+  data = regression_train
+)
+
+linear_model_2 <- lm(
+  rating ~ length_60 + year_c + log10_votes + film_type +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train
+)
+
+linear_model_3 <- lm(
+  rating ~ length_60 * film_type + year_c + log10_votes +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train
+)
+
+model_fit_summary <- function(model, model_name) {
+  model_summary <- summary(model)
+  tibble(
+    Model = model_name,
+    N = nobs(model),
+    R_squared = model_summary$r.squared,
+    Adjusted_R_squared = model_summary$adj.r.squared,
+    Residual_SSE = sum(resid(model)^2),
+    Residual_SE = model_summary$sigma,
+    AIC = AIC(model)
+  )
+}
+
+linear_model_comparison <- bind_rows(
+  model_fit_summary(linear_model_1, "Model 1: runtime only"),
+  model_fit_summary(linear_model_2, "Model 2: adjusted main effects"),
+  model_fit_summary(linear_model_3, "Model 3: runtime interaction")
+)
+clean_table(
+  linear_model_comparison,
+  "Multiple linear regression model comparison"
+)
+```
+
+## 3.2 Compare nested models and inspect coefficients
+
+The partial F-tests assess whether the additional terms improve fit beyond the preceding model. A significant result indicates that the larger model explains additional variation in the training sample; it does not establish causation. We retain Model 3 for interpretation if the runtime interaction adds useful evidence.
+
+```{r linear-nested-tests}
+linear_nested_tests <- anova(
+  linear_model_1,
+  linear_model_2,
+  linear_model_3
+)
+
+linear_nested_table <- as.data.frame(linear_nested_tests) %>%
+  tibble::rownames_to_column("Model comparison")
+clean_table(
+  linear_nested_table,
+  "Partial F-tests for sequential linear models"
+)
+
+linear_coef <- summary(linear_model_3)$coefficients
+linear_ci <- confint(linear_model_3)
+
+linear_coefficient_table <- tibble(
+  Term = rownames(linear_coef),
+  Estimate = linear_coef[, "Estimate"],
+  Std_Error = linear_coef[, "Std. Error"],
+  t_value = linear_coef[, "t value"],
+  p_value = linear_coef[, "Pr(>|t|)"],
+  CI_95_low = linear_ci[, 1],
+  CI_95_high = linear_ci[, 2]
+)
+clean_table(
+  linear_coefficient_table,
+  "Coefficients for the multiple linear regression with interaction"
+)
+```
+
+## 3.3 Check assumptions and collinearity
+
+The diagnostic plots help assess whether a linear model is a reasonable summary. A curved residual pattern can indicate non-linearity; a changing residual spread can indicate heteroscedasticity; and departures in the Q-Q plot indicate non-normal residuals. Extreme outliers can also influence least-squares estimates. Independence is primarily a study-design assumption and cannot be established from these two plots. With a large dataset, practical effect sizes and plots should be considered alongside p-values.
+
+```{r linear-diagnostics, fig.width=10, fig.height=7}
+set.seed(2026)
+linear_diagnostics_full <- tibble(
+  Fitted = fitted(linear_model_3),
+  Residual = resid(linear_model_3)
+)
+linear_diagnostics <- linear_diagnostics_full %>%
+  slice_sample(n = min(6000, nrow(linear_diagnostics_full)))
+
+ggplot(linear_diagnostics, aes(x = Fitted, y = Residual)) +
+  geom_point(alpha = 0.18, size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  labs(
+    title = "Residuals versus fitted values",
+    x = "Fitted audience rating",
+    y = "Residual"
+  ) +
+  theme_minimal()
+
+ggplot(linear_diagnostics, aes(sample = Residual)) +
+  stat_qq(alpha = 0.3) +
+  stat_qq_line(colour = "red") +
+  labs(title = "Normal Q-Q plot of sampled residuals") +
+  theme_minimal()
+```
+
+The genre indicators can overlap, so some predictors may be correlated. Strong multicollinearity can make individual coefficient estimates unstable even when the overall model predicts reasonably well. The coefficient estimates should therefore be interpreted conditionally and with this limitation in mind.
+
+## 3.4 Cross-validation and held-out prediction
+
+Training fit alone does not show whether a model generalises. Cross-validation repeatedly fits the model on part of the training data and evaluates it on the omitted fold. We use ten-fold cross-validation to estimate variation in predictive error, then evaluate the final fitted model once on the untouched test set. For cross-validation, we use the uncentred release year (`year`) rather than `year_c`. Because the model includes an intercept, these formulations are algebraically equivalent, while using the original year avoids estimating a centring constant from observations that may be part of a validation fold.
+
+```{r linear-cross-validation}
+# The R practical demonstrates 10-fold CV with caret::train().
+# Use uncentred year here: it is algebraically equivalent to year_c
+# for a model with an intercept and avoids estimating a centring constant
+# from observations that are serving as validation folds.
+set.seed(2026)
+linear_cv_control <- caret::trainControl(
+  method = "cv",
+  number = 10
+)
+
+linear_cv_fit <- caret::train(
+  rating ~ length_60 * film_type + year + log10_votes +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train,
+  trControl = linear_cv_control,
+  method = "lm",
+  metric = "Rsquared"
+)
+
+linear_cv_results <- linear_cv_fit$resample %>%
+  summarise(
+    Mean_R_squared = mean(Rsquared, na.rm = TRUE),
+    SD_R_squared = sd(Rsquared, na.rm = TRUE),
+    Mean_RMSE = mean(RMSE, na.rm = TRUE),
+    SD_RMSE = sd(RMSE, na.rm = TRUE),
+    Mean_MAE = mean(MAE, na.rm = TRUE),
+    SD_MAE = sd(MAE, na.rm = TRUE)
+  )
+
+clean_table(
+  linear_cv_results,
+  "Ten-fold cross-validation using caret"
+)
+```
+
+```{r linear-test-performance}
+linear_test_prediction <- predict(
+  linear_model_3,
+  newdata = regression_test
+)
+linear_test_error <- regression_test$rating - linear_test_prediction
+
+linear_test_metrics <- tibble(
+  Metric = c(
+    "Training R-squared",
+    "Test R-squared",
+    "Test RMSE",
+    "Test MAE",
+    "Test baseline RMSE (training-mean prediction)"
+  ),
+  Value = c(
+    summary(linear_model_3)$r.squared,
+    1 - sum(linear_test_error^2) /
+      sum((regression_test$rating - mean(regression_test$rating))^2),
+    sqrt(mean(linear_test_error^2)),
+    mean(abs(linear_test_error)),
+    sqrt(mean((regression_test$rating - mean(regression_train$rating))^2))
+  )
+)
+clean_table(linear_test_metrics, "Linear regression performance on held-out test data")
+```
+
+The training R-squared describes fit to data used for estimation. The test metrics estimate performance on unseen movies. A large gap between training and test performance can indicate overfitting; poor performance on both can indicate underfitting. Cross-validation is useful for model comparison and tuning, but it does not replace the independent test set.
+
+# 4. Logistic regression: modelling short-film classification
+
+## 4.1 Binary outcome, probabilities, odds and log odds
+
+The response is `short_binary`: 1 indicates the dataset's short-film classification and 0 indicates another film. Unlike linear regression, logistic regression does not fit a straight line directly to a 0/1 response, because a straight line can produce values below 0 or above 1. Logistic regression models the **log odds** and transforms the result into a probability between 0 and 1.
+
+For a probability \(p\):
+
+- Odds are \(p/(1-p)\).
+- Log odds are \(\log[p/(1-p)]\), which can take any real value.
+- The logistic model is \(\log[p/(1-p)] = \beta_0 + \beta_1X_1 + \cdots + \beta_pX_p\).
+- The corresponding probability is \(p = 1/[1+\exp(-z)]\), where \(z\) is the linear predictor.
+
+The logistic model is fitted by maximum likelihood. Equivalently, the fitting procedure minimises the negative log-likelihood (often called log loss), rather than the sum of squared residuals used by ordinary least squares.
+
+Exponentiating a coefficient gives an odds ratio. An odds ratio is not a probability difference or a risk ratio. For example, an odds ratio below 1 means the odds decrease as the predictor increases, holding other variables constant.
+
+## 4.2 Fit logistic models sequentially
+
+We fit three nested models on the training set:
+
+- **Model 1:** runtime only.
+- **Model 2:** adds release year, vote count and audience rating.
+- **Model 3:** adds the six genre indicators.
+
+Runtime is scaled per ten minutes (`length_10`) so that its odds ratio is easier to display. The +1 offset in `log10_votes` means its coefficient is approximately interpreted as a ten-fold increase in vote count, especially away from zero.
+
+```{r logistic-models}
+logistic_model_1 <- glm(
+  short_binary ~ length_10,
+  data = regression_train,
+  family = binomial(link = "logit")
+)
+
+logistic_model_2 <- glm(
+  short_binary ~ length_10 + year_c + log10_votes + rating,
+  data = regression_train,
+  family = binomial(link = "logit")
+)
+
+logistic_model_3 <- glm(
+  short_binary ~ length_10 + year_c + log10_votes + rating +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train,
+  family = binomial(link = "logit")
+)
+
+logistic_model_comparison <- tibble(
+  Model = c(
+    "Model 1: runtime only",
+    "Model 2: runtime, year, votes and rating",
+    "Model 3: plus genre indicators"
+  ),
+  N = c(
+    nobs(logistic_model_1),
+    nobs(logistic_model_2),
+    nobs(logistic_model_3)
+  ),
+  AIC = c(
+    AIC(logistic_model_1),
+    AIC(logistic_model_2),
+    AIC(logistic_model_3)
+  ),
+  Residual_deviance = c(
+    deviance(logistic_model_1),
+    deviance(logistic_model_2),
+    deviance(logistic_model_3)
+  )
+)
+clean_table(logistic_model_comparison, "Logistic regression model comparison")
+
+logistic_nested_tests <- anova(
+  logistic_model_1,
+  logistic_model_2,
+  logistic_model_3,
+  test = "Chisq"
+)
+clean_table(
+  as.data.frame(logistic_nested_tests) %>%
+    tibble::rownames_to_column("Model comparison"),
+  "Likelihood-ratio tests for sequential logistic models"
+)
+
+# Retain the genre terms only if the nested test is significant
+# and the larger model also has a lower AIC.
+p_genres <- logistic_nested_tests$`Pr(>Chi)`[3]
+logistic_final_model <- if (
+  !is.na(p_genres) &&
+    p_genres < 0.05 &&
+    AIC(logistic_model_3) < AIC(logistic_model_2)
+) {
+  logistic_model_3
+} else {
+  logistic_model_2
+}
+logistic_final_model_name <- if (identical(logistic_final_model, logistic_model_3)) {
+  "Model 3: with genre indicators"
+} else {
+  "Model 2: without genre indicators"
+}
+
+selection_summary <- tibble(
+  Selected_model = logistic_final_model_name,
+  P_value_for_adding_genres = p_genres,
+  AIC_model_2 = AIC(logistic_model_2),
+  AIC_model_3 = AIC(logistic_model_3),
+  Converged = logistic_final_model$converged
+)
+clean_table(selection_summary, "Selected logistic model")
+```
+
+### Ten-fold cross-validation for logistic regression
+
+The R practical also demonstrates ten-fold cross-validation for a binomial GLM using `caret::train()`. The outcome is explicitly converted to a two-level factor using syntactically valid R names. `caret::twoClassSummary()` treats the first factor level as the event of interest, so `Short_film` is placed first. The folds are created from the training set only; the independent test set remains untouched.
+
+```{r logistic-cross-validation}
+logistic_cv_data <- regression_train %>%
+  mutate(
+    short_class = factor(
+      short_binary,
+      levels = c(1, 0),
+      labels = c("Short_film", "Other_film")
+    )
+  )
+
+logistic_cv_formula <- if (
+  identical(logistic_final_model, logistic_model_3)
+) {
+  short_class ~ length_10 + year + log10_votes + rating +
+    Action + Animation + Comedy + Documentary + Drama + Romance
+} else {
+  short_class ~ length_10 + year + log10_votes + rating
+}
+
+set.seed(2026)
+logistic_cv_control <- caret::trainControl(
+  method = "cv",
+  number = 10,
+  classProbs = TRUE,
+  summaryFunction = caret::twoClassSummary
+)
+
+logistic_cv_fit <- caret::train(
+  logistic_cv_formula,
+  data = logistic_cv_data,
+  method = "glm",
+  family = binomial(),
+  trControl = logistic_cv_control,
+  metric = "ROC"
+)
+
+logistic_cv_summary <- logistic_cv_fit$resample %>%
+  summarise(
+    Mean_ROC_AUC = mean(ROC, na.rm = TRUE),
+    SD_ROC_AUC = sd(ROC, na.rm = TRUE),
+    Mean_Sensitivity = mean(Sens, na.rm = TRUE),
+    Mean_Specificity = mean(Spec, na.rm = TRUE)
+  )
+
+clean_table(
+  logistic_cv_summary,
+  "Ten-fold cross-validation for the selected logistic model"
+)
+
+# The first outcome level is the positive/event class for twoClassSummary.
+# Therefore Sens is sensitivity for Short_film and Spec is specificity for Other_film.
+```
+
+If the output reports `glm.fit: fitted probabilities numerically 0 or 1 occurred`, the predictors may separate the two classes extremely strongly. This warning should not be ignored: coefficients and odds ratios can become very large or very small and may be unstable. A converged model is not automatically free of separation concerns. We therefore interpret the runtime effect and very high classification performance cautiously, especially because `Short` is a dataset label whose relationship with runtime may be strong.
+
+## 4.3 Interpret odds ratios
+
+The coefficient is a change in log odds. Exponentiating it gives the odds ratio for a one-unit increase in the predictor. For runtime, one unit is ten minutes; for `log10_votes`, one unit is approximately a ten-fold increase in votes. Confidence intervals quantify uncertainty in the estimated odds ratios.
+
+Raw coefficient magnitudes should not be used on their own to rank predictor importance: predictors are measured in different units and ranges. Interpret the effect using the variable's scale, plausible changes, uncertainty and the other predictors in the model.
+
+```{r logistic-coefficients}
+logistic_coef <- summary(logistic_final_model)$coefficients
+logistic_ci <- suppressWarnings(confint.default(logistic_final_model))
+
+logistic_coefficient_table <- tibble(
+  Term = rownames(logistic_coef),
+  Log_odds_estimate = logistic_coef[, "Estimate"],
+  Std_Error = logistic_coef[, "Std. Error"],
+  z_value = logistic_coef[, "z value"],
+  p_value = logistic_coef[, "Pr(>|z|)"],
+  Odds_ratio = exp(logistic_coef[, "Estimate"]),
+  OR_CI_95_low = exp(logistic_ci[, 1]),
+  OR_CI_95_high = exp(logistic_ci[, 2])
+)
+clean_table(
+  logistic_coefficient_table,
+  "Odds ratios for the selected logistic regression",
+  digits = 4
+)
+
+probability_range <- range(fitted(logistic_final_model))
+tibble(
+  Minimum_training_probability = probability_range[1],
+  Maximum_training_probability = probability_range[2],
+  Training_probabilities_below_1e_6 = sum(fitted(logistic_final_model) < 1e-6),
+  Training_probabilities_above_1_minus_1e_6 =
+    sum(fitted(logistic_final_model) > 1 - 1e-6)
+) %>%
+  clean_table("Check for extreme fitted probabilities", digits = 6)
+```
+
+## 4.4 Evaluate classification on the held-out test set
+
+The model returns a probability for each test movie. A threshold of 0.50 is used as a conventional starting point. The threshold is a decision rule, not a biological boundary; raising or lowering it changes the trade-off between sensitivity and specificity. We do not tune the threshold on the final test set.
+
+The confusion matrix separates true positives (TP), false positives (FP), false negatives (FN) and true negatives (TN). Accuracy is `(TP + TN) / (TP + FP + FN + TN)`. Sensitivity is `TP / (TP + FN)`, while specificity is `TN / (TN + FP)`. The ROC curve plots sensitivity against the false-positive rate, `1 - specificity`, over classification thresholds. Accuracy is reported alongside sensitivity and specificity because accuracy alone can be misleading when classes are imbalanced. ROC-AUC summarises discrimination across possible thresholds; it does not measure probability calibration or select the final decision threshold.
+
+```{r logistic-test-performance}
+test_probability <- predict(
+  logistic_final_model,
+  newdata = regression_test,
+  type = "response"
+)
+
+classification_threshold <- 0.50
+test_prediction <- as.integer(test_probability >= classification_threshold)
+class_labels <- c("Other film", "Short film")
+
+confusion_matrix <- table(
+  Actual = factor(
+    regression_test$short_binary,
+    levels = c(0, 1),
+    labels = class_labels
+  ),
+  Predicted = factor(
+    test_prediction,
+    levels = c(0, 1),
+    labels = class_labels
+  )
+)
+clean_table(
+  as.data.frame.matrix(confusion_matrix) %>%
+    tibble::rownames_to_column("Actual class"),
+  "Confusion matrix on the test set"
+)
+
+true_negative <- confusion_matrix[1, 1]
+false_positive <- confusion_matrix[1, 2]
+false_negative <- confusion_matrix[2, 1]
+true_positive <- confusion_matrix[2, 2]
+
+safe_ratio <- function(numerator, denominator) {
+  if (denominator == 0) NA_real_ else numerator / denominator
+}
+
+accuracy <- safe_ratio(true_positive + true_negative, sum(confusion_matrix))
+sensitivity <- safe_ratio(true_positive, true_positive + false_negative)
+specificity <- safe_ratio(true_negative, true_negative + false_positive)
+precision <- safe_ratio(true_positive, true_positive + false_positive)
+f1_score <- safe_ratio(
+  2 * precision * sensitivity,
+  precision + sensitivity
+)
+
+truth <- regression_test$short_binary
+n_positive <- sum(truth == 1)
+n_negative <- sum(truth == 0)
+probability_ranks <- rank(test_probability, ties.method = "average")
+roc_auc <- if (n_positive == 0 || n_negative == 0) {
+  NA_real_
+} else {
+  (sum(probability_ranks[truth == 1]) -
+     n_positive * (n_positive + 1) / 2) / (n_positive * n_negative)
+}
+
+majority_class_baseline_accuracy <- max(
+  prop.table(table(regression_train$short_binary))
+)
+
+classification_metrics <- tibble(
+  Metric = c(
+    "Classification threshold",
+    "Majority-class baseline accuracy (training set)",
+    "Accuracy",
+    "Sensitivity (short-film recall)",
+    "Specificity (other-film recall)",
+    "Precision",
+    "F1-score",
+    "ROC AUC"
+  ),
+  Value = c(
+    classification_threshold,
+    majority_class_baseline_accuracy,
+    accuracy,
+    sensitivity,
+    specificity,
+    precision,
+    f1_score,
+    roc_auc
+  )
+)
+clean_table(
+  classification_metrics,
+  "Held-out classification performance",
+  digits = 3
+)
+
+# Build ROC coordinates by accumulating true and false positives
+# at each distinct predicted probability (ties remain together).
+roc_core <- tibble(
+  probability = test_probability,
+  actual = truth
+) %>%
+  group_by(probability) %>%
+  summarise(
+    TP_added = sum(actual == 1),
+    FP_added = sum(actual == 0),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(probability)) %>%
+  mutate(
+    TP = cumsum(TP_added),
+    FP = cumsum(FP_added),
+    TPR = TP / n_positive,
+    FPR = FP / n_negative
+  ) %>%
+  transmute(FPR, TPR)
+
+roc_curve_data <- bind_rows(
+  tibble(FPR = 0, TPR = 0),
+  roc_core,
+  tibble(FPR = 1, TPR = 1)
+) %>%
+  arrange(FPR, TPR)
+
+ggplot(roc_curve_data, aes(x = FPR, y = TPR)) +
+  geom_line(linewidth = 1, colour = "#0072B2") +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed",
+    colour = "grey50"
+  ) +
+  coord_equal() +
+  labs(
+    title = "Receiver operating characteristic (ROC) curve",
+    subtitle = paste("Test-set AUC =", round(roc_auc, 3)),
+    x = "False positive rate (1 - specificity)",
+    y = "True positive rate (sensitivity)"
+  ) +
+  theme_minimal()
+```
+
+# 5. Model selection, regularisation and limitations
+
+The sequential comparisons show whether adding predictor groups improves the model. AIC and nested-model tests should be read alongside coefficient size, uncertainty, diagnostic plots and the study question; a single statistic should not determine the model automatically.
+
+The lectures also introduce **regularisation** as a way to reduce overfitting when models contain many or strongly correlated predictors. Ridge regression (L2 penalty) shrinks coefficients, while LASSO (L1 penalty) can shrink some coefficients to zero and perform feature selection. We do not fit a penalised model here because the assignment uses a relatively small, pre-specified set of predictors and focuses on interpreting multiple and logistic regression. If the predictor set were much larger, or coefficient instability from collinearity were substantial, ridge or LASSO could be considered and the penalty strength (\(\lambda\)) selected using cross-validation on the training data only.
+
+Other limitations are important. The observations are movies from a historical dataset ending in 2005. Vote count is a proxy for audience engagement and may be related to rating and visibility. Genre indicators overlap, so their coefficients are conditional on the other included genres. Budget and MPAA are omitted because of missingness. Unmeasured factors such as marketing, distribution, production context and audience composition may influence ratings and votes. The very high logistic classification performance and any numerical 0/1 probability warnings require particular caution: the model may be exploiting a very strong relationship between runtime and the dataset's `Short` label. This does not show that runtime defines the label.
+
+Finally, predictive performance and interpretability are different goals. Linear and logistic regression are relatively interpretable compared with complex black-box models, but their coefficients still describe conditional associations, not mechanisms or causal effects. Test-set performance should be interpreted as generalisation to movies drawn from a similar dataset, not automatically to contemporary films.
+
+The R-specific implementation follows the relevant refresher and practical material: formula notation, explicit factor coding, `lm()` and `glm(..., family = binomial)`, `summary()` output, model predictions, confusion matrices, ROC analysis, and `caret` ten-fold cross-validation. Other R-course topics such as S3 method authoring, `with()`, set-operation examples, package documentation and unrelated tidyverse exercises are not separate sections because they do not contribute directly to the requested regression analysis; their applicable coding principles are followed in the implementation.

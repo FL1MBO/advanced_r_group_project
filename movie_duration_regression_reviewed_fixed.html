@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Group Data Analysis Project" />
+
+<meta name="date" content="2026-11-11" />
+
+<title>File 2: Multiple and Logistic Regression Analysis</title>
+
+<script src="movie_duration_regression_reviewed_fixed_files/header-attrs-2.32/header-attrs.js"></script>
+<script src="movie_duration_regression_reviewed_fixed_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="movie_duration_regression_reviewed_fixed_files/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="movie_duration_regression_reviewed_fixed_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="movie_duration_regression_reviewed_fixed_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="movie_duration_regression_reviewed_fixed_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="movie_duration_regression_reviewed_fixed_files/navigation-1.1/tabsets.js"></script>
+<link href="movie_duration_regression_reviewed_fixed_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="movie_duration_regression_reviewed_fixed_files/highlightjs-9.12.0/highlight.js"></script>
+<script src="movie_duration_regression_reviewed_fixed_files/kePrint-0.0.1/kePrint.js"></script>
+<link href="movie_duration_regression_reviewed_fixed_files/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">File 2: Multiple and Logistic Regression
+Analysis</h1>
+<h4 class="author">Group Data Analysis Project</h4>
+<h4 class="date">2026-11-11</h4>
+
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#aim-and-modelling-strategy"
+id="toc-aim-and-modelling-strategy"><span
+class="toc-section-number">1</span> 1. Aim and modelling
+strategy</a></li>
+<li><a href="#load-packages-and-prepare-the-data"
+id="toc-load-packages-and-prepare-the-data"><span
+class="toc-section-number">2</span> 2. Load packages and prepare the
+data</a></li>
+<li><a href="#multiple-linear-regression-explaining-audience-ratings"
+id="toc-multiple-linear-regression-explaining-audience-ratings"><span
+class="toc-section-number">3</span> 3. Multiple linear regression:
+explaining audience ratings</a>
+<ul>
+<li><a href="#model-idea-and-sequential-specification"
+id="toc-model-idea-and-sequential-specification"><span
+class="toc-section-number">3.1</span> 3.1 Model idea and sequential
+specification</a></li>
+<li><a href="#compare-nested-models-and-inspect-coefficients"
+id="toc-compare-nested-models-and-inspect-coefficients"><span
+class="toc-section-number">3.2</span> 3.2 Compare nested models and
+inspect coefficients</a></li>
+<li><a href="#check-assumptions-and-collinearity"
+id="toc-check-assumptions-and-collinearity"><span
+class="toc-section-number">3.3</span> 3.3 Check assumptions and
+collinearity</a></li>
+<li><a href="#cross-validation-and-held-out-prediction"
+id="toc-cross-validation-and-held-out-prediction"><span
+class="toc-section-number">3.4</span> 3.4 Cross-validation and held-out
+prediction</a></li>
+</ul></li>
+<li><a href="#logistic-regression-modelling-short-film-classification"
+id="toc-logistic-regression-modelling-short-film-classification"><span
+class="toc-section-number">4</span> 4. Logistic regression: modelling
+short-film classification</a>
+<ul>
+<li><a href="#binary-outcome-probabilities-odds-and-log-odds"
+id="toc-binary-outcome-probabilities-odds-and-log-odds"><span
+class="toc-section-number">4.1</span> 4.1 Binary outcome, probabilities,
+odds and log odds</a></li>
+<li><a href="#fit-logistic-models-sequentially"
+id="toc-fit-logistic-models-sequentially"><span
+class="toc-section-number">4.2</span> 4.2 Fit logistic models
+sequentially</a></li>
+<li><a href="#interpret-odds-ratios"
+id="toc-interpret-odds-ratios"><span
+class="toc-section-number">4.3</span> 4.3 Interpret odds ratios</a></li>
+<li><a href="#evaluate-classification-on-the-held-out-test-set"
+id="toc-evaluate-classification-on-the-held-out-test-set"><span
+class="toc-section-number">4.4</span> 4.4 Evaluate classification on the
+held-out test set</a></li>
+</ul></li>
+<li><a href="#model-selection-regularisation-and-limitations"
+id="toc-model-selection-regularisation-and-limitations"><span
+class="toc-section-number">5</span> 5. Model selection, regularisation
+and limitations</a></li>
+</ul>
+</div>
+
+<div id="aim-and-modelling-strategy" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> 1. Aim and modelling
+strategy</h1>
+<p>File 1 explored associations between movie duration, audience
+ratings, film classification, genres, release year and vote counts. This
+document applies the regression methods from the supervised-learning
+lectures to two different target types:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Multiple linear regression:</strong> explain variation in a
+continuous outcome, the average audience rating.</li>
+<li><strong>Binary logistic regression:</strong> estimate the
+probability of a categorical outcome, the dataset’s <code>Short</code>
+classification.</li>
+</ol>
+<p>The choice of model follows the target: linear regression models a
+continuous response, whereas logistic regression models the probability
+of a binary response. The models describe adjusted associations and
+predictive performance; neither establishes causation.</p>
+<p>The <code>Short</code> variable is an independent dataset
+classification, not a fixed runtime cutoff. Runtime is therefore a
+possible predictor of this label, not its definition. This report
+includes the lecture material directly relevant to these regression
+tasks. Other supervised-learning topics such as self-supervised
+pretraining, PCA workflows and neural-network interpretation are outside
+the scope of this particular assignment.</p>
+</div>
+<div id="load-packages-and-prepare-the-data" class="section level1"
+number="2">
+<h1><span class="header-section-number">2</span> 2. Load packages and
+prepare the data</h1>
+<p>We use the <code>ggplot2movies</code> dataset from File 1. Budget and
+MPAA are omitted from the main models because these metadata fields have
+substantial missingness. The same eligible movies and the same
+stratified training-test split are used for both modelling tasks,
+allowing a consistent evaluation design.</p>
+<pre class="r"><code>library(ggplot2movies)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(caret)
+
+clean_table &lt;- function(x, caption = NULL, digits = 3) {
+  knitr::kable(
+    x,
+    format = &quot;html&quot;,
+    caption = caption,
+    digits = digits,
+    row.names = FALSE
+  ) %&gt;%
+    kableExtra::kable_styling(
+      bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;, &quot;condensed&quot;),
+      full_width = FALSE,
+      position = &quot;left&quot;
+    )
+}
+
+data(&quot;movies&quot;, package = &quot;ggplot2movies&quot;)
+movies_raw &lt;- tibble::as_tibble(movies) %&gt;%
+  mutate(movie_id = row_number())
+
+genres &lt;- c(
+  &quot;Action&quot;, &quot;Animation&quot;, &quot;Comedy&quot;,
+  &quot;Documentary&quot;, &quot;Drama&quot;, &quot;Romance&quot;
+)
+
+required_variables &lt;- c(
+  &quot;rating&quot;, &quot;length&quot;, &quot;year&quot;, &quot;votes&quot;, &quot;Short&quot;, genres
+)
+stopifnot(all(required_variables %in% names(movies_raw)))
+
+regression_data &lt;- movies_raw %&gt;%
+  mutate(
+    across(
+      all_of(c(&quot;rating&quot;, &quot;length&quot;, &quot;year&quot;, &quot;votes&quot;, genres)),
+      ~ as.numeric(.x)
+    ),
+    Short = as.numeric(as.character(Short))
+  ) %&gt;%
+  filter(
+    if_all(all_of(required_variables), ~ is.finite(.x)),
+    rating &gt;= 1,
+    rating &lt;= 10,
+    length &gt;= 0,
+    votes &gt;= 0,
+    Short %in% c(0, 1)
+  ) %&gt;%
+  mutate(
+    length_60 = length / 60,
+    length_10 = length / 10,
+    # Adding one allows movies with zero votes to be retained.
+    log10_votes = log10(votes + 1),
+    film_type = factor(
+      Short,
+      levels = c(0, 1),
+      labels = c(&quot;Other film&quot;, &quot;Short film&quot;)
+    ),
+    short_binary = Short
+  )
+
+# One stratified split, shared by the linear and logistic analyses.
+set.seed(2026)
+regression_train &lt;- regression_data %&gt;%
+  group_by(short_binary) %&gt;%
+  slice_sample(prop = 0.80) %&gt;%
+  ungroup()
+
+regression_test &lt;- anti_join(
+  regression_data,
+  regression_train %&gt;% select(movie_id),
+  by = &quot;movie_id&quot;
+)
+
+# Estimate the centring constant from training data only.
+year_center &lt;- mean(regression_train$year)
+regression_train &lt;- regression_train %&gt;%
+  mutate(year_c = year - year_center)
+regression_test &lt;- regression_test %&gt;%
+  mutate(year_c = year - year_center)
+
+sample_description &lt;- tibble(
+  Measure = c(
+    &quot;Movies in original dataset&quot;,
+    &quot;Movies retained for analysis&quot;,
+    &quot;Training movies&quot;,
+    &quot;Test movies&quot;,
+    &quot;Other films in full analysis set&quot;,
+    &quot;Short films in full analysis set&quot;,
+    &quot;Mean release year in training set&quot;,
+    &quot;Mean runtime in full analysis set (minutes)&quot;
+  ),
+  Value = c(
+    nrow(movies_raw),
+    nrow(regression_data),
+    nrow(regression_train),
+    nrow(regression_test),
+    sum(regression_data$short_binary == 0),
+    sum(regression_data$short_binary == 1),
+    year_center,
+    mean(regression_data$length)
+  )
+)
+clean_table(sample_description, &quot;Regression dataset overview&quot;, digits = 1)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Regression dataset overview
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Measure
+</th>
+<th style="text-align:right;">
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Movies in original dataset
+</td>
+<td style="text-align:right;">
+58788.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Movies retained for analysis
+</td>
+<td style="text-align:right;">
+58788.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Training movies
+</td>
+<td style="text-align:right;">
+47030.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Test movies
+</td>
+<td style="text-align:right;">
+11758.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Other films in full analysis set
+</td>
+<td style="text-align:right;">
+49330.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Short films in full analysis set
+</td>
+<td style="text-align:right;">
+9458.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mean release year in training set
+</td>
+<td style="text-align:right;">
+1976.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mean runtime in full analysis set (minutes)
+</td>
+<td style="text-align:right;">
+82.3
+</td>
+</tr>
+</tbody>
+</table>
+<p>All required analysis variables are complete in the retained dataset.
+Genre indicators are kept separately because a movie can belong to more
+than one genre. <code>length_60</code> expresses runtime in hours for
+the linear model; <code>length_10</code> expresses it in ten-minute
+units for easier logistic odds-ratio interpretation.
+<code>log10_votes</code> is a log-transformed vote count with a +1
+offset to retain zero-vote observations; a one-unit increase is
+approximately a ten-fold increase for non-zero counts.</p>
+<p>The 80/20 split is stratified by <code>Short</code> so both classes
+are represented in the training and test sets. The test set is held
+aside for final evaluation and is not used to fit or choose the models.
+Preprocessing that requires an estimated value (centering year) is based
+on the training data and then applied unchanged to the test data. This
+avoids a basic form of data leakage: allowing information from the test
+set to influence model fitting or preprocessing.</p>
+<div id="r-formula-and-variable-coding" class="section level3"
+number="2.0.1">
+<h3><span class="header-section-number">2.0.1</span> R formula and
+variable coding</h3>
+<p>The R model formula follows the syntax shown in the R practicals: the
+response is on the left of <code>~</code>, and predictors are on the
+right. The <code>+</code> operator adds predictors; <code>*</code>
+includes both main effects and their interaction. We use an explicit
+predictor list rather than <code>.</code> so that <code>movie_id</code>
+and any unintended columns cannot enter the model.
+<code>film_type</code> is a factor with <code>Other film</code> as the
+reference level, as categorical predictors should be encoded as factors
+when their numeric codes are only labels. The 0/1 genre indicators
+remain numeric binary predictors, and <code>short_binary</code> remains
+a numeric 0/1 response for the binomial GLM.</p>
+<p>The analysis uses readable object names, pipes for data preparation,
+a reusable <code>clean_table()</code> helper, comments explaining
+non-obvious choices, and <code>stopifnot()</code> to fail early if
+required variables are absent. These follow the R refresher’s KISS, DRY,
+abstraction and input-checking guidelines. The regression models are
+ordinary R model objects; <code>summary()</code>, <code>anova()</code>,
+<code>confint()</code> and <code>predict()</code> are used to inspect
+and apply their standard methods.</p>
+</div>
+</div>
+<div id="multiple-linear-regression-explaining-audience-ratings"
+class="section level1" number="3">
+<h1><span class="header-section-number">3</span> 3. Multiple linear
+regression: explaining audience ratings</h1>
+<div id="model-idea-and-sequential-specification" class="section level2"
+number="3.1">
+<h2><span class="header-section-number">3.1</span> 3.1 Model idea and
+sequential specification</h2>
+<p>The response, <code>rating</code>, is a numerical score from 1 to 10,
+so linear regression is a suitable starting point. With multiple
+predictors, the model estimates the outcome as a linear combination of
+those predictors. A coefficient describes the expected change in rating
+for a one-unit increase in that predictor, <strong>holding the other
+included predictors constant</strong>.</p>
+<p>For ordinary least-squares regression, the fitted coefficients
+minimise the sum of squared residuals (SSE). A residual is the observed
+rating minus its fitted rating. Squaring prevents positive and negative
+errors from cancelling and gives larger errors more weight.</p>
+<p>We fit three nested models on the training set:</p>
+<ul>
+<li><strong>Model 1:</strong> runtime only; an unadjusted reference
+relationship.</li>
+<li><strong>Model 2:</strong> adds release year, log-transformed vote
+count, film classification and the six genre indicators.</li>
+<li><strong>Model 3:</strong> adds an interaction between runtime and
+film classification to test whether the runtime-rating slope differs
+between short films and other films.</li>
+</ul>
+<p>The reference category is <code>Other film</code>. In Model 3, the
+<code>length_60</code> coefficient is the runtime slope for other films;
+the interaction coefficient is the additional slope for short films.</p>
+<pre class="r"><code>linear_model_1 &lt;- lm(
+  rating ~ length_60,
+  data = regression_train
+)
+
+linear_model_2 &lt;- lm(
+  rating ~ length_60 + year_c + log10_votes + film_type +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train
+)
+
+linear_model_3 &lt;- lm(
+  rating ~ length_60 * film_type + year_c + log10_votes +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train
+)
+
+model_fit_summary &lt;- function(model, model_name) {
+  model_summary &lt;- summary(model)
+  tibble(
+    Model = model_name,
+    N = nobs(model),
+    R_squared = model_summary$r.squared,
+    Adjusted_R_squared = model_summary$adj.r.squared,
+    Residual_SSE = sum(resid(model)^2),
+    Residual_SE = model_summary$sigma,
+    AIC = AIC(model)
+  )
+}
+
+linear_model_comparison &lt;- bind_rows(
+  model_fit_summary(linear_model_1, &quot;Model 1: runtime only&quot;),
+  model_fit_summary(linear_model_2, &quot;Model 2: adjusted main effects&quot;),
+  model_fit_summary(linear_model_3, &quot;Model 3: runtime interaction&quot;)
+)
+clean_table(
+  linear_model_comparison,
+  &quot;Multiple linear regression model comparison&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Multiple linear regression model comparison
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Model
+</th>
+<th style="text-align:right;">
+N
+</th>
+<th style="text-align:right;">
+R_squared
+</th>
+<th style="text-align:right;">
+Adjusted_R_squared
+</th>
+<th style="text-align:right;">
+Residual_SSE
+</th>
+<th style="text-align:right;">
+Residual_SE
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Model 1: runtime only
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+114053.1
+</td>
+<td style="text-align:right;">
+1.557
+</td>
+<td style="text-align:right;">
+175134.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Model 2: adjusted main effects
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+<td style="text-align:right;">
+102068.4
+</td>
+<td style="text-align:right;">
+1.473
+</td>
+<td style="text-align:right;">
+169930.9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Model 3: runtime interaction
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+<td style="text-align:right;">
+102013.4
+</td>
+<td style="text-align:right;">
+1.473
+</td>
+<td style="text-align:right;">
+169907.6
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="compare-nested-models-and-inspect-coefficients"
+class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> 3.2 Compare nested
+models and inspect coefficients</h2>
+<p>The partial F-tests assess whether the additional terms improve fit
+beyond the preceding model. A significant result indicates that the
+larger model explains additional variation in the training sample; it
+does not establish causation. We retain Model 3 for interpretation if
+the runtime interaction adds useful evidence.</p>
+<pre class="r"><code>linear_nested_tests &lt;- anova(
+  linear_model_1,
+  linear_model_2,
+  linear_model_3
+)
+
+linear_nested_table &lt;- as.data.frame(linear_nested_tests) %&gt;%
+  tibble::rownames_to_column(&quot;Model comparison&quot;)
+clean_table(
+  linear_nested_table,
+  &quot;Partial F-tests for sequential linear models&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Partial F-tests for sequential linear models
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Model comparison
+</th>
+<th style="text-align:right;">
+Res.Df
+</th>
+<th style="text-align:right;">
+RSS
+</th>
+<th style="text-align:right;">
+Df
+</th>
+<th style="text-align:right;">
+Sum of Sq
+</th>
+<th style="text-align:right;">
+F
+</th>
+<th style="text-align:right;">
+Pr(&gt;F)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:right;">
+47028
+</td>
+<td style="text-align:right;">
+114053.1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:right;">
+47019
+</td>
+<td style="text-align:right;">
+102068.4
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+11984.65
+</td>
+<td style="text-align:right;">
+613.747
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:right;">
+47018
+</td>
+<td style="text-align:right;">
+102013.4
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+54.97
+</td>
+<td style="text-align:right;">
+25.336
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>linear_coef &lt;- summary(linear_model_3)$coefficients
+linear_ci &lt;- confint(linear_model_3)
+
+linear_coefficient_table &lt;- tibble(
+  Term = rownames(linear_coef),
+  Estimate = linear_coef[, &quot;Estimate&quot;],
+  Std_Error = linear_coef[, &quot;Std. Error&quot;],
+  t_value = linear_coef[, &quot;t value&quot;],
+  p_value = linear_coef[, &quot;Pr(&gt;|t|)&quot;],
+  CI_95_low = linear_ci[, 1],
+  CI_95_high = linear_ci[, 2]
+)
+clean_table(
+  linear_coefficient_table,
+  &quot;Coefficients for the multiple linear regression with interaction&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Coefficients for the multiple linear regression with interaction
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Term
+</th>
+<th style="text-align:right;">
+Estimate
+</th>
+<th style="text-align:right;">
+Std_Error
+</th>
+<th style="text-align:right;">
+t_value
+</th>
+<th style="text-align:right;">
+p_value
+</th>
+<th style="text-align:right;">
+CI_95_low
+</th>
+<th style="text-align:right;">
+CI_95_high
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+4.814
+</td>
+<td style="text-align:right;">
+0.025
+</td>
+<td style="text-align:right;">
+191.008
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+4.764
+</td>
+<td style="text-align:right;">
+4.863
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+length_60
+</td>
+<td style="text-align:right;">
+0.208
+</td>
+<td style="text-align:right;">
+0.012
+</td>
+<td style="text-align:right;">
+17.453
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.185
+</td>
+<td style="text-align:right;">
+0.232
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+film_typeShort film
+</td>
+<td style="text-align:right;">
+0.830
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+20.112
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.749
+</td>
+<td style="text-align:right;">
+0.911
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+year_c
+</td>
+<td style="text-align:right;">
+-0.005
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+-18.348
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+-0.006
+</td>
+<td style="text-align:right;">
+-0.005
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+log10_votes
+</td>
+<td style="text-align:right;">
+0.244
+</td>
+<td style="text-align:right;">
+0.010
+</td>
+<td style="text-align:right;">
+25.442
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.225
+</td>
+<td style="text-align:right;">
+0.263
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Action
+</td>
+<td style="text-align:right;">
+-0.609
+</td>
+<td style="text-align:right;">
+0.026
+</td>
+<td style="text-align:right;">
+-23.627
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+-0.660
+</td>
+<td style="text-align:right;">
+-0.559
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Animation
+</td>
+<td style="text-align:right;">
+0.469
+</td>
+<td style="text-align:right;">
+0.035
+</td>
+<td style="text-align:right;">
+13.384
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.400
+</td>
+<td style="text-align:right;">
+0.538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Comedy
+</td>
+<td style="text-align:right;">
+0.051
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+3.107
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.019
+</td>
+<td style="text-align:right;">
+0.083
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Documentary
+</td>
+<td style="text-align:right;">
+1.047
+</td>
+<td style="text-align:right;">
+0.030
+</td>
+<td style="text-align:right;">
+34.434
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.987
+</td>
+<td style="text-align:right;">
+1.106
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Drama
+</td>
+<td style="text-align:right;">
+0.526
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+33.894
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.496
+</td>
+<td style="text-align:right;">
+0.557
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Romance
+</td>
+<td style="text-align:right;">
+0.186
+</td>
+<td style="text-align:right;">
+0.026
+</td>
+<td style="text-align:right;">
+7.254
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.136
+</td>
+<td style="text-align:right;">
+0.236
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+length_60:film_typeShort film
+</td>
+<td style="text-align:right;">
+0.565
+</td>
+<td style="text-align:right;">
+0.112
+</td>
+<td style="text-align:right;">
+5.033
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.345
+</td>
+<td style="text-align:right;">
+0.785
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="check-assumptions-and-collinearity" class="section level2"
+number="3.3">
+<h2><span class="header-section-number">3.3</span> 3.3 Check assumptions
+and collinearity</h2>
+<p>The diagnostic plots help assess whether a linear model is a
+reasonable summary. A curved residual pattern can indicate
+non-linearity; a changing residual spread can indicate
+heteroscedasticity; and departures in the Q-Q plot indicate non-normal
+residuals. Extreme outliers can also influence least-squares estimates.
+Independence is primarily a study-design assumption and cannot be
+established from these two plots. With a large dataset, practical effect
+sizes and plots should be considered alongside p-values.</p>
+<pre class="r"><code>set.seed(2026)
+linear_diagnostics_full &lt;- tibble(
+  Fitted = fitted(linear_model_3),
+  Residual = resid(linear_model_3)
+)
+linear_diagnostics &lt;- linear_diagnostics_full %&gt;%
+  slice_sample(n = min(6000, nrow(linear_diagnostics_full)))
+
+ggplot(linear_diagnostics, aes(x = Fitted, y = Residual)) +
+  geom_point(alpha = 0.18, size = 1) +
+  geom_hline(yintercept = 0, linetype = &quot;dashed&quot;, colour = &quot;red&quot;) +
+  labs(
+    title = &quot;Residuals versus fitted values&quot;,
+    x = &quot;Fitted audience rating&quot;,
+    y = &quot;Residual&quot;
+  ) +
+  theme_minimal()</code></pre>
+<p><img src="movie_duration_regression_reviewed_fixed_files/figure-html/linear-diagnostics-1.png" alt="" width="960" /></p>
+<pre class="r"><code>ggplot(linear_diagnostics, aes(sample = Residual)) +
+  stat_qq(alpha = 0.3) +
+  stat_qq_line(colour = &quot;red&quot;) +
+  labs(title = &quot;Normal Q-Q plot of sampled residuals&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="movie_duration_regression_reviewed_fixed_files/figure-html/linear-diagnostics-2.png" alt="" width="960" /></p>
+<p>The genre indicators can overlap, so some predictors may be
+correlated. Strong multicollinearity can make individual coefficient
+estimates unstable even when the overall model predicts reasonably well.
+The coefficient estimates should therefore be interpreted conditionally
+and with this limitation in mind.</p>
+</div>
+<div id="cross-validation-and-held-out-prediction"
+class="section level2" number="3.4">
+<h2><span class="header-section-number">3.4</span> 3.4 Cross-validation
+and held-out prediction</h2>
+<p>Training fit alone does not show whether a model generalises.
+Cross-validation repeatedly fits the model on part of the training data
+and evaluates it on the omitted fold. We use ten-fold cross-validation
+to estimate variation in predictive error, then evaluate the final
+fitted model once on the untouched test set. For cross-validation, we
+use the uncentred release year (<code>year</code>) rather than
+<code>year_c</code>. Because the model includes an intercept, these
+formulations are algebraically equivalent, while using the original year
+avoids estimating a centring constant from observations that may be part
+of a validation fold.</p>
+<pre class="r"><code># The R practical demonstrates 10-fold CV with caret::train().
+# Use uncentred year here: it is algebraically equivalent to year_c
+# for a model with an intercept and avoids estimating a centring constant
+# from observations that are serving as validation folds.
+set.seed(2026)
+linear_cv_control &lt;- caret::trainControl(
+  method = &quot;cv&quot;,
+  number = 10
+)
+
+linear_cv_fit &lt;- caret::train(
+  rating ~ length_60 * film_type + year + log10_votes +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train,
+  trControl = linear_cv_control,
+  method = &quot;lm&quot;,
+  metric = &quot;Rsquared&quot;
+)
+
+linear_cv_results &lt;- linear_cv_fit$resample %&gt;%
+  summarise(
+    Mean_R_squared = mean(Rsquared, na.rm = TRUE),
+    SD_R_squared = sd(Rsquared, na.rm = TRUE),
+    Mean_RMSE = mean(RMSE, na.rm = TRUE),
+    SD_RMSE = sd(RMSE, na.rm = TRUE),
+    Mean_MAE = mean(MAE, na.rm = TRUE),
+    SD_MAE = sd(MAE, na.rm = TRUE)
+  )
+
+clean_table(
+  linear_cv_results,
+  &quot;Ten-fold cross-validation using caret&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Ten-fold cross-validation using caret
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Mean_R_squared
+</th>
+<th style="text-align:right;">
+SD_R_squared
+</th>
+<th style="text-align:right;">
+Mean_RMSE
+</th>
+<th style="text-align:right;">
+SD_RMSE
+</th>
+<th style="text-align:right;">
+Mean_MAE
+</th>
+<th style="text-align:right;">
+SD_MAE
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.104
+</td>
+<td style="text-align:right;">
+0.022
+</td>
+<td style="text-align:right;">
+1.48
+</td>
+<td style="text-align:right;">
+0.031
+</td>
+<td style="text-align:right;">
+1.139
+</td>
+<td style="text-align:right;">
+0.012
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>linear_test_prediction &lt;- predict(
+  linear_model_3,
+  newdata = regression_test
+)
+linear_test_error &lt;- regression_test$rating - linear_test_prediction
+
+linear_test_metrics &lt;- tibble(
+  Metric = c(
+    &quot;Training R-squared&quot;,
+    &quot;Test R-squared&quot;,
+    &quot;Test RMSE&quot;,
+    &quot;Test MAE&quot;,
+    &quot;Test baseline RMSE (training-mean prediction)&quot;
+  ),
+  Value = c(
+    summary(linear_model_3)$r.squared,
+    1 - sum(linear_test_error^2) /
+      sum((regression_test$rating - mean(regression_test$rating))^2),
+    sqrt(mean(linear_test_error^2)),
+    mean(abs(linear_test_error)),
+    sqrt(mean((regression_test$rating - mean(regression_train$rating))^2))
+  )
+)
+clean_table(linear_test_metrics, &quot;Linear regression performance on held-out test data&quot;)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Linear regression performance on held-out test data
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Metric
+</th>
+<th style="text-align:right;">
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Training R-squared
+</td>
+<td style="text-align:right;">
+0.106
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Test R-squared
+</td>
+<td style="text-align:right;">
+0.103
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Test RMSE
+</td>
+<td style="text-align:right;">
+1.452
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Test MAE
+</td>
+<td style="text-align:right;">
+1.121
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Test baseline RMSE (training-mean prediction)
+</td>
+<td style="text-align:right;">
+1.533
+</td>
+</tr>
+</tbody>
+</table>
+<p>The training R-squared describes fit to data used for estimation. The
+test metrics estimate performance on unseen movies. A large gap between
+training and test performance can indicate overfitting; poor performance
+on both can indicate underfitting. Cross-validation is useful for model
+comparison and tuning, but it does not replace the independent test
+set.</p>
+</div>
+</div>
+<div id="logistic-regression-modelling-short-film-classification"
+class="section level1" number="4">
+<h1><span class="header-section-number">4</span> 4. Logistic regression:
+modelling short-film classification</h1>
+<div id="binary-outcome-probabilities-odds-and-log-odds"
+class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> 4.1 Binary outcome,
+probabilities, odds and log odds</h2>
+<p>The response is <code>short_binary</code>: 1 indicates the dataset’s
+short-film classification and 0 indicates another film. Unlike linear
+regression, logistic regression does not fit a straight line directly to
+a 0/1 response, because a straight line can produce values below 0 or
+above 1. Logistic regression models the <strong>log odds</strong> and
+transforms the result into a probability between 0 and 1.</p>
+<p>For a probability <span class="math inline">\(p\)</span>:</p>
+<ul>
+<li>Odds are <span class="math inline">\(p/(1-p)\)</span>.</li>
+<li>Log odds are <span class="math inline">\(\log[p/(1-p)]\)</span>,
+which can take any real value.</li>
+<li>The logistic model is <span class="math inline">\(\log[p/(1-p)] =
+\beta_0 + \beta_1X_1 + \cdots + \beta_pX_p\)</span>.</li>
+<li>The corresponding probability is <span class="math inline">\(p =
+1/[1+\exp(-z)]\)</span>, where <span class="math inline">\(z\)</span> is
+the linear predictor.</li>
+</ul>
+<p>The logistic model is fitted by maximum likelihood. Equivalently, the
+fitting procedure minimises the negative log-likelihood (often called
+log loss), rather than the sum of squared residuals used by ordinary
+least squares.</p>
+<p>Exponentiating a coefficient gives an odds ratio. An odds ratio is
+not a probability difference or a risk ratio. For example, an odds ratio
+below 1 means the odds decrease as the predictor increases, holding
+other variables constant.</p>
+</div>
+<div id="fit-logistic-models-sequentially" class="section level2"
+number="4.2">
+<h2><span class="header-section-number">4.2</span> 4.2 Fit logistic
+models sequentially</h2>
+<p>We fit three nested models on the training set:</p>
+<ul>
+<li><strong>Model 1:</strong> runtime only.</li>
+<li><strong>Model 2:</strong> adds release year, vote count and audience
+rating.</li>
+<li><strong>Model 3:</strong> adds the six genre indicators.</li>
+</ul>
+<p>Runtime is scaled per ten minutes (<code>length_10</code>) so that
+its odds ratio is easier to display. The +1 offset in
+<code>log10_votes</code> means its coefficient is approximately
+interpreted as a ten-fold increase in vote count, especially away from
+zero.</p>
+<pre class="r"><code>logistic_model_1 &lt;- glm(
+  short_binary ~ length_10,
+  data = regression_train,
+  family = binomial(link = &quot;logit&quot;)
+)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>logistic_model_2 &lt;- glm(
+  short_binary ~ length_10 + year_c + log10_votes + rating,
+  data = regression_train,
+  family = binomial(link = &quot;logit&quot;)
+)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>logistic_model_3 &lt;- glm(
+  short_binary ~ length_10 + year_c + log10_votes + rating +
+    Action + Animation + Comedy + Documentary + Drama + Romance,
+  data = regression_train,
+  family = binomial(link = &quot;logit&quot;)
+)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>logistic_model_comparison &lt;- tibble(
+  Model = c(
+    &quot;Model 1: runtime only&quot;,
+    &quot;Model 2: runtime, year, votes and rating&quot;,
+    &quot;Model 3: plus genre indicators&quot;
+  ),
+  N = c(
+    nobs(logistic_model_1),
+    nobs(logistic_model_2),
+    nobs(logistic_model_3)
+  ),
+  AIC = c(
+    AIC(logistic_model_1),
+    AIC(logistic_model_2),
+    AIC(logistic_model_3)
+  ),
+  Residual_deviance = c(
+    deviance(logistic_model_1),
+    deviance(logistic_model_2),
+    deviance(logistic_model_3)
+  )
+)
+clean_table(logistic_model_comparison, &quot;Logistic regression model comparison&quot;)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Logistic regression model comparison
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Model
+</th>
+<th style="text-align:right;">
+N
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+Residual_deviance
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Model 1: runtime only
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+1335.719
+</td>
+<td style="text-align:right;">
+1331.719
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Model 2: runtime, year, votes and rating
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+1305.323
+</td>
+<td style="text-align:right;">
+1295.323
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Model 3: plus genre indicators
+</td>
+<td style="text-align:right;">
+47030
+</td>
+<td style="text-align:right;">
+1313.554
+</td>
+<td style="text-align:right;">
+1291.554
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>logistic_nested_tests &lt;- anova(
+  logistic_model_1,
+  logistic_model_2,
+  logistic_model_3,
+  test = &quot;Chisq&quot;
+)
+clean_table(
+  as.data.frame(logistic_nested_tests) %&gt;%
+    tibble::rownames_to_column(&quot;Model comparison&quot;),
+  &quot;Likelihood-ratio tests for sequential logistic models&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Likelihood-ratio tests for sequential logistic models
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Model comparison
+</th>
+<th style="text-align:right;">
+Resid. Df
+</th>
+<th style="text-align:right;">
+Resid. Dev
+</th>
+<th style="text-align:right;">
+Df
+</th>
+<th style="text-align:right;">
+Deviance
+</th>
+<th style="text-align:right;">
+Pr(&gt;Chi)
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:right;">
+47028
+</td>
+<td style="text-align:right;">
+1331.719
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:right;">
+47025
+</td>
+<td style="text-align:right;">
+1295.323
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+36.396
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+3
+</td>
+<td style="text-align:right;">
+47019
+</td>
+<td style="text-align:right;">
+1291.554
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+3.769
+</td>
+<td style="text-align:right;">
+0.708
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Retain the genre terms only if the nested test is significant
+# and the larger model also has a lower AIC.
+p_genres &lt;- logistic_nested_tests$`Pr(&gt;Chi)`[3]
+logistic_final_model &lt;- if (
+  !is.na(p_genres) &amp;&amp;
+    p_genres &lt; 0.05 &amp;&amp;
+    AIC(logistic_model_3) &lt; AIC(logistic_model_2)
+) {
+  logistic_model_3
+} else {
+  logistic_model_2
+}
+logistic_final_model_name &lt;- if (identical(logistic_final_model, logistic_model_3)) {
+  &quot;Model 3: with genre indicators&quot;
+} else {
+  &quot;Model 2: without genre indicators&quot;
+}
+
+selection_summary &lt;- tibble(
+  Selected_model = logistic_final_model_name,
+  P_value_for_adding_genres = p_genres,
+  AIC_model_2 = AIC(logistic_model_2),
+  AIC_model_3 = AIC(logistic_model_3),
+  Converged = logistic_final_model$converged
+)
+clean_table(selection_summary, &quot;Selected logistic model&quot;)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Selected logistic model
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Selected_model
+</th>
+<th style="text-align:right;">
+P_value_for_adding_genres
+</th>
+<th style="text-align:right;">
+AIC_model_2
+</th>
+<th style="text-align:right;">
+AIC_model_3
+</th>
+<th style="text-align:left;">
+Converged
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Model 2: without genre indicators
+</td>
+<td style="text-align:right;">
+0.708
+</td>
+<td style="text-align:right;">
+1305.323
+</td>
+<td style="text-align:right;">
+1313.554
+</td>
+<td style="text-align:left;">
+TRUE
+</td>
+</tr>
+</tbody>
+</table>
+<div id="ten-fold-cross-validation-for-logistic-regression"
+class="section level3" number="4.2.1">
+<h3><span class="header-section-number">4.2.1</span> Ten-fold
+cross-validation for logistic regression</h3>
+<p>The R practical also demonstrates ten-fold cross-validation for a
+binomial GLM using <code>caret::train()</code>. The outcome is
+explicitly converted to a two-level factor using syntactically valid R
+names. <code>caret::twoClassSummary()</code> treats the first factor
+level as the event of interest, so <code>Short_film</code> is placed
+first. The folds are created from the training set only; the independent
+test set remains untouched.</p>
+<pre class="r"><code>logistic_cv_data &lt;- regression_train %&gt;%
+  mutate(
+    short_class = factor(
+      short_binary,
+      levels = c(1, 0),
+      labels = c(&quot;Short_film&quot;, &quot;Other_film&quot;)
+    )
+  )
+
+logistic_cv_formula &lt;- if (
+  identical(logistic_final_model, logistic_model_3)
+) {
+  short_class ~ length_10 + year + log10_votes + rating +
+    Action + Animation + Comedy + Documentary + Drama + Romance
+} else {
+  short_class ~ length_10 + year + log10_votes + rating
+}
+
+set.seed(2026)
+logistic_cv_control &lt;- caret::trainControl(
+  method = &quot;cv&quot;,
+  number = 10,
+  classProbs = TRUE,
+  summaryFunction = caret::twoClassSummary
+)
+
+logistic_cv_fit &lt;- caret::train(
+  logistic_cv_formula,
+  data = logistic_cv_data,
+  method = &quot;glm&quot;,
+  family = binomial(),
+  trControl = logistic_cv_control,
+  metric = &quot;ROC&quot;
+)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre class="r"><code>logistic_cv_summary &lt;- logistic_cv_fit$resample %&gt;%
+  summarise(
+    Mean_ROC_AUC = mean(ROC, na.rm = TRUE),
+    SD_ROC_AUC = sd(ROC, na.rm = TRUE),
+    Mean_Sensitivity = mean(Sens, na.rm = TRUE),
+    Mean_Specificity = mean(Spec, na.rm = TRUE)
+  )
+
+clean_table(
+  logistic_cv_summary,
+  &quot;Ten-fold cross-validation for the selected logistic model&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Ten-fold cross-validation for the selected logistic model
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Mean_ROC_AUC
+</th>
+<th style="text-align:right;">
+SD_ROC_AUC
+</th>
+<th style="text-align:right;">
+Mean_Sensitivity
+</th>
+<th style="text-align:right;">
+Mean_Specificity
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.999
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.993
+</td>
+<td style="text-align:right;">
+0.999
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># The first outcome level is the positive/event class for twoClassSummary.
+# Therefore Sens is sensitivity for Short_film and Spec is specificity for Other_film.</code></pre>
+<p>If the output reports
+<code>glm.fit: fitted probabilities numerically 0 or 1 occurred</code>,
+the predictors may separate the two classes extremely strongly. This
+warning should not be ignored: coefficients and odds ratios can become
+very large or very small and may be unstable. A converged model is not
+automatically free of separation concerns. We therefore interpret the
+runtime effect and very high classification performance cautiously,
+especially because <code>Short</code> is a dataset label whose
+relationship with runtime may be strong.</p>
+</div>
+</div>
+<div id="interpret-odds-ratios" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> 4.3 Interpret odds
+ratios</h2>
+<p>The coefficient is a change in log odds. Exponentiating it gives the
+odds ratio for a one-unit increase in the predictor. For runtime, one
+unit is ten minutes; for <code>log10_votes</code>, one unit is
+approximately a ten-fold increase in votes. Confidence intervals
+quantify uncertainty in the estimated odds ratios.</p>
+<p>Raw coefficient magnitudes should not be used on their own to rank
+predictor importance: predictors are measured in different units and
+ranges. Interpret the effect using the variable’s scale, plausible
+changes, uncertainty and the other predictors in the model.</p>
+<pre class="r"><code>logistic_coef &lt;- summary(logistic_final_model)$coefficients
+logistic_ci &lt;- suppressWarnings(confint.default(logistic_final_model))
+
+logistic_coefficient_table &lt;- tibble(
+  Term = rownames(logistic_coef),
+  Log_odds_estimate = logistic_coef[, &quot;Estimate&quot;],
+  Std_Error = logistic_coef[, &quot;Std. Error&quot;],
+  z_value = logistic_coef[, &quot;z value&quot;],
+  p_value = logistic_coef[, &quot;Pr(&gt;|z|)&quot;],
+  Odds_ratio = exp(logistic_coef[, &quot;Estimate&quot;]),
+  OR_CI_95_low = exp(logistic_ci[, 1]),
+  OR_CI_95_high = exp(logistic_ci[, 2])
+)
+clean_table(
+  logistic_coefficient_table,
+  &quot;Odds ratios for the selected logistic regression&quot;,
+  digits = 4
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Odds ratios for the selected logistic regression
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Term
+</th>
+<th style="text-align:right;">
+Log_odds_estimate
+</th>
+<th style="text-align:right;">
+Std_Error
+</th>
+<th style="text-align:right;">
+z_value
+</th>
+<th style="text-align:right;">
+p_value
+</th>
+<th style="text-align:right;">
+Odds_ratio
+</th>
+<th style="text-align:right;">
+OR_CI_95_low
+</th>
+<th style="text-align:right;">
+OR_CI_95_high
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+9.9522
+</td>
+<td style="text-align:right;">
+0.4769
+</td>
+<td style="text-align:right;">
+20.8678
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+20998.4386
+</td>
+<td style="text-align:right;">
+8245.8377
+</td>
+<td style="text-align:right;">
+53473.5750
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+length_10
+</td>
+<td style="text-align:right;">
+-2.5026
+</td>
+<td style="text-align:right;">
+0.0720
+</td>
+<td style="text-align:right;">
+-34.7704
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+0.0819
+</td>
+<td style="text-align:right;">
+0.0711
+</td>
+<td style="text-align:right;">
+0.0943
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+year_c
+</td>
+<td style="text-align:right;">
+0.0158
+</td>
+<td style="text-align:right;">
+0.0029
+</td>
+<td style="text-align:right;">
+5.5267
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+1.0160
+</td>
+<td style="text-align:right;">
+1.0103
+</td>
+<td style="text-align:right;">
+1.0217
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+log10_votes
+</td>
+<td style="text-align:right;">
+0.3697
+</td>
+<td style="text-align:right;">
+0.1680
+</td>
+<td style="text-align:right;">
+2.2006
+</td>
+<td style="text-align:right;">
+0.0278
+</td>
+<td style="text-align:right;">
+1.4473
+</td>
+<td style="text-align:right;">
+1.0413
+</td>
+<td style="text-align:right;">
+2.0118
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+rating
+</td>
+<td style="text-align:right;">
+0.0568
+</td>
+<td style="text-align:right;">
+0.0427
+</td>
+<td style="text-align:right;">
+1.3319
+</td>
+<td style="text-align:right;">
+0.1829
+</td>
+<td style="text-align:right;">
+1.0585
+</td>
+<td style="text-align:right;">
+0.9736
+</td>
+<td style="text-align:right;">
+1.1508
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>probability_range &lt;- range(fitted(logistic_final_model))
+tibble(
+  Minimum_training_probability = probability_range[1],
+  Maximum_training_probability = probability_range[2],
+  Training_probabilities_below_1e_6 = sum(fitted(logistic_final_model) &lt; 1e-6),
+  Training_probabilities_above_1_minus_1e_6 =
+    sum(fitted(logistic_final_model) &gt; 1 - 1e-6)
+) %&gt;%
+  clean_table(&quot;Check for extreme fitted probabilities&quot;, digits = 6)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Check for extreme fitted probabilities
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Minimum_training_probability
+</th>
+<th style="text-align:right;">
+Maximum_training_probability
+</th>
+<th style="text-align:right;">
+Training_probabilities_below_1e_6
+</th>
+<th style="text-align:right;">
+Training_probabilities_above_1_minus_1e_6
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.999988
+</td>
+<td style="text-align:right;">
+12856
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="evaluate-classification-on-the-held-out-test-set"
+class="section level2" number="4.4">
+<h2><span class="header-section-number">4.4</span> 4.4 Evaluate
+classification on the held-out test set</h2>
+<p>The model returns a probability for each test movie. A threshold of
+0.50 is used as a conventional starting point. The threshold is a
+decision rule, not a biological boundary; raising or lowering it changes
+the trade-off between sensitivity and specificity. We do not tune the
+threshold on the final test set.</p>
+<p>The confusion matrix separates true positives (TP), false positives
+(FP), false negatives (FN) and true negatives (TN). Accuracy is
+<code>(TP + TN) / (TP + FP + FN + TN)</code>. Sensitivity is
+<code>TP / (TP + FN)</code>, while specificity is
+<code>TN / (TN + FP)</code>. The ROC curve plots sensitivity against the
+false-positive rate, <code>1 - specificity</code>, over classification
+thresholds. Accuracy is reported alongside sensitivity and specificity
+because accuracy alone can be misleading when classes are imbalanced.
+ROC-AUC summarises discrimination across possible thresholds; it does
+not measure probability calibration or select the final decision
+threshold.</p>
+<pre class="r"><code>test_probability &lt;- predict(
+  logistic_final_model,
+  newdata = regression_test,
+  type = &quot;response&quot;
+)
+
+classification_threshold &lt;- 0.50
+test_prediction &lt;- as.integer(test_probability &gt;= classification_threshold)
+class_labels &lt;- c(&quot;Other film&quot;, &quot;Short film&quot;)
+
+confusion_matrix &lt;- table(
+  Actual = factor(
+    regression_test$short_binary,
+    levels = c(0, 1),
+    labels = class_labels
+  ),
+  Predicted = factor(
+    test_prediction,
+    levels = c(0, 1),
+    labels = class_labels
+  )
+)
+clean_table(
+  as.data.frame.matrix(confusion_matrix) %&gt;%
+    tibble::rownames_to_column(&quot;Actual class&quot;),
+  &quot;Confusion matrix on the test set&quot;
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Confusion matrix on the test set
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Actual class
+</th>
+<th style="text-align:right;">
+Other film
+</th>
+<th style="text-align:right;">
+Short film
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Other film
+</td>
+<td style="text-align:right;">
+9855
+</td>
+<td style="text-align:right;">
+11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Short film
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+1877
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>true_negative &lt;- confusion_matrix[1, 1]
+false_positive &lt;- confusion_matrix[1, 2]
+false_negative &lt;- confusion_matrix[2, 1]
+true_positive &lt;- confusion_matrix[2, 2]
+
+safe_ratio &lt;- function(numerator, denominator) {
+  if (denominator == 0) NA_real_ else numerator / denominator
+}
+
+accuracy &lt;- safe_ratio(true_positive + true_negative, sum(confusion_matrix))
+sensitivity &lt;- safe_ratio(true_positive, true_positive + false_negative)
+specificity &lt;- safe_ratio(true_negative, true_negative + false_positive)
+precision &lt;- safe_ratio(true_positive, true_positive + false_positive)
+f1_score &lt;- safe_ratio(
+  2 * precision * sensitivity,
+  precision + sensitivity
+)
+
+truth &lt;- regression_test$short_binary
+n_positive &lt;- sum(truth == 1)
+n_negative &lt;- sum(truth == 0)
+probability_ranks &lt;- rank(test_probability, ties.method = &quot;average&quot;)
+roc_auc &lt;- if (n_positive == 0 || n_negative == 0) {
+  NA_real_
+} else {
+  (sum(probability_ranks[truth == 1]) -
+     n_positive * (n_positive + 1) / 2) / (n_positive * n_negative)
+}
+
+majority_class_baseline_accuracy &lt;- max(
+  prop.table(table(regression_train$short_binary))
+)
+
+classification_metrics &lt;- tibble(
+  Metric = c(
+    &quot;Classification threshold&quot;,
+    &quot;Majority-class baseline accuracy (training set)&quot;,
+    &quot;Accuracy&quot;,
+    &quot;Sensitivity (short-film recall)&quot;,
+    &quot;Specificity (other-film recall)&quot;,
+    &quot;Precision&quot;,
+    &quot;F1-score&quot;,
+    &quot;ROC AUC&quot;
+  ),
+  Value = c(
+    classification_threshold,
+    majority_class_baseline_accuracy,
+    accuracy,
+    sensitivity,
+    specificity,
+    precision,
+    f1_score,
+    roc_auc
+  )
+)
+clean_table(
+  classification_metrics,
+  &quot;Held-out classification performance&quot;,
+  digits = 3
+)</code></pre>
+<table class="table table-striped table-hover table-condensed" style="color: black; width: auto !important; ">
+<caption>
+Held-out classification performance
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Metric
+</th>
+<th style="text-align:right;">
+Value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Classification threshold
+</td>
+<td style="text-align:right;">
+0.500
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Majority-class baseline accuracy (training set)
+</td>
+<td style="text-align:right;">
+0.839
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Accuracy
+</td>
+<td style="text-align:right;">
+0.998
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivity (short-film recall)
+</td>
+<td style="text-align:right;">
+0.992
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Specificity (other-film recall)
+</td>
+<td style="text-align:right;">
+0.999
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Precision
+</td>
+<td style="text-align:right;">
+0.994
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+F1-score
+</td>
+<td style="text-align:right;">
+0.993
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ROC AUC
+</td>
+<td style="text-align:right;">
+0.998
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Build ROC coordinates by accumulating true and false positives
+# at each distinct predicted probability (ties remain together).
+roc_core &lt;- tibble(
+  probability = test_probability,
+  actual = truth
+) %&gt;%
+  group_by(probability) %&gt;%
+  summarise(
+    TP_added = sum(actual == 1),
+    FP_added = sum(actual == 0),
+    .groups = &quot;drop&quot;
+  ) %&gt;%
+  arrange(desc(probability)) %&gt;%
+  mutate(
+    TP = cumsum(TP_added),
+    FP = cumsum(FP_added),
+    TPR = TP / n_positive,
+    FPR = FP / n_negative
+  ) %&gt;%
+  transmute(FPR, TPR)
+
+roc_curve_data &lt;- bind_rows(
+  tibble(FPR = 0, TPR = 0),
+  roc_core,
+  tibble(FPR = 1, TPR = 1)
+) %&gt;%
+  arrange(FPR, TPR)
+
+ggplot(roc_curve_data, aes(x = FPR, y = TPR)) +
+  geom_line(linewidth = 1, colour = &quot;#0072B2&quot;) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = &quot;dashed&quot;,
+    colour = &quot;grey50&quot;
+  ) +
+  coord_equal() +
+  labs(
+    title = &quot;Receiver operating characteristic (ROC) curve&quot;,
+    subtitle = paste(&quot;Test-set AUC =&quot;, round(roc_auc, 3)),
+    x = &quot;False positive rate (1 - specificity)&quot;,
+    y = &quot;True positive rate (sensitivity)&quot;
+  ) +
+  theme_minimal()</code></pre>
+<p><img src="movie_duration_regression_reviewed_fixed_files/figure-html/logistic-test-performance-1.png" alt="" width="672" /></p>
+</div>
+</div>
+<div id="model-selection-regularisation-and-limitations"
+class="section level1" number="5">
+<h1><span class="header-section-number">5</span> 5. Model selection,
+regularisation and limitations</h1>
+<p>The sequential comparisons show whether adding predictor groups
+improves the model. AIC and nested-model tests should be read alongside
+coefficient size, uncertainty, diagnostic plots and the study question;
+a single statistic should not determine the model automatically.</p>
+<p>The lectures also introduce <strong>regularisation</strong> as a way
+to reduce overfitting when models contain many or strongly correlated
+predictors. Ridge regression (L2 penalty) shrinks coefficients, while
+LASSO (L1 penalty) can shrink some coefficients to zero and perform
+feature selection. We do not fit a penalised model here because the
+assignment uses a relatively small, pre-specified set of predictors and
+focuses on interpreting multiple and logistic regression. If the
+predictor set were much larger, or coefficient instability from
+collinearity were substantial, ridge or LASSO could be considered and
+the penalty strength (<span class="math inline">\(\lambda\)</span>)
+selected using cross-validation on the training data only.</p>
+<p>Other limitations are important. The observations are movies from a
+historical dataset ending in 2005. Vote count is a proxy for audience
+engagement and may be related to rating and visibility. Genre indicators
+overlap, so their coefficients are conditional on the other included
+genres. Budget and MPAA are omitted because of missingness. Unmeasured
+factors such as marketing, distribution, production context and audience
+composition may influence ratings and votes. The very high logistic
+classification performance and any numerical 0/1 probability warnings
+require particular caution: the model may be exploiting a very strong
+relationship between runtime and the dataset’s <code>Short</code> label.
+This does not show that runtime defines the label.</p>
+<p>Finally, predictive performance and interpretability are different
+goals. Linear and logistic regression are relatively interpretable
+compared with complex black-box models, but their coefficients still
+describe conditional associations, not mechanisms or causal effects.
+Test-set performance should be interpreted as generalisation to movies
+drawn from a similar dataset, not automatically to contemporary
+films.</p>
+<p>The R-specific implementation follows the relevant refresher and
+practical material: formula notation, explicit factor coding,
+<code>lm()</code> and <code>glm(..., family = binomial)</code>,
+<code>summary()</code> output, model predictions, confusion matrices,
+ROC analysis, and <code>caret</code> ten-fold cross-validation. Other
+R-course topics such as S3 method authoring, <code>with()</code>,
+set-operation examples, package documentation and unrelated tidyverse
+exercises are not separate sections because they do not contribute
+directly to the requested regression analysis; their applicable coding
+principles are followed in the implementation.</p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
