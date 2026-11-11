@@ -70,7 +70,10 @@ clean_movies <- clean_movies |>
   mutate(mean_rating = mean(rating), mean_votes = mean(votes)) 
 
 ggplot(clean_movies, aes(year, mean_rating)) + 
-  geom_line()
+  geom_line() + 
+  xlab("Year of movie release") +
+  ylab("Average rating (0 - 10")
+
 
 ggplot(clean_movies, aes(year, mean_votes)) + 
   geom_line(colour="#69b3a2") +
@@ -86,6 +89,10 @@ apply(clean_movies, 2, plot)
 table(clean_movies$year)
 summary(clean_movies$year)
 ```
+
+
+Normalise the average score per year on the number of movies released
+- Per decade too... 
 
 ```{r}
 hist(clean_movies$year)
