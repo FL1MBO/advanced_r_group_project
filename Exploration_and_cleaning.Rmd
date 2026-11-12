@@ -11,10 +11,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r library setup}
 #install.packages("ggplot2") # in case someone doesn't have it yet
+<<<<<<< HEAD
 library(ggplot2)
 library(ggplot2movies)
+library(tidyverse)
 ```
 
+# Movie dataset initial exploration
 
 [link to the description online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
 
@@ -30,6 +33,7 @@ The data contains:
   - r1-10 (percentile per score 1-10, rounded to nearest 10%)
   - MPAA rating
   - Genre (action, animation, comedy, drama, documentary, romance, short)
+=======
 library(gt)
 library(ggplot2)
 library(ggplot2movies)
