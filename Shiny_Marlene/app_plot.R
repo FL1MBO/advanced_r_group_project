@@ -1,4 +1,5 @@
 
+
 # Load packages ----------------------------------------------------------------
 
 library(shiny)
@@ -10,18 +11,23 @@ library(ggplot2movies)
 
 # Load data --------------------------------------------------------------------
 
-movies <- movies
+min_votes <- min(movies$votes)
+max_votes <- max(movies$votes)
 
 clean_movies <- movies |>
   select(-budget, -mpaa) |>
-  mutate(genre = factor(case_when(rowSums(pick(Action:Romance)) > 1 ~ "Crosslisted",
-                                  Action == 1 ~ "Action",
-                                  Animation == 1 ~ "Animation",
-                                  Comedy == 1 ~ "Comedy",
-                                  Drama == 1 ~ "Drama",
-                                  Documentary == 1 ~ "Documentary",
-                                  Romance == 1 ~ "Romance",
-                                  rowSums(pick(Action:Romance)) < 1 ~ "No genre")))
+  mutate(genre = factor(
+    case_when(
+      rowSums(pick(Action:Romance)) > 1 ~ "Crosslisted",
+      Action == 1 ~ "Action",
+      Animation == 1 ~ "Animation",
+      Comedy == 1 ~ "Comedy",
+      Drama == 1 ~ "Drama",
+      Documentary == 1 ~ "Documentary",
+      Romance == 1 ~ "Romance",
+      rowSums(pick(Action:Romance)) < 1 ~ "No genre"
+    )
+  ))
 
 # Define UI --------------------------------------------------------------------
 
@@ -67,33 +73,96 @@ ui <- page_sidebar(
       selected = "genre"
     ),
     
-#    checkboxGroupInput(
-#      inputId = "selected_type",
-#      label = "Select genre:",
-#      choices = c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance"),
-#      selected = "Action"
-#    )
-   ),
-  
-  card(
-    plotOutput(outputId = "scatterplot"),
-    textOutput(outputId = "description")
+    checkboxGroupInput(
+      inputId = "genre",
+      label = "Choose a genre",
+      choices = list(
+        "Crosslisted" = "Crosslisted",
+        "No genre" = "No genre",
+        "Action" = "Action",
+        "Animation" = "Animation",
+        "Comedy" = "Comedy",
+        "Drama" = "Drama",
+        "Documentary" = "Documentary",
+        "Romance" = "Romance"
+      ),
+      selected = genres
+    ),
+    
+    h4("Temporal plot filters"),
+    
+    # Slider input for the range of years ----
+    sliderInput(
+      inputId = "range_year",
+      "Set the range of year of movie release:",
+      min = 1893,
+      max = 2005,
+      value = c(1893, 2005),
+      step = 1,
+      sep = ""
+    ),
+    
+    # Slider input for filtering out low votes ----
+    sliderInput(
+      inputId = "votes",
+      "Set the range of votes per movie considered",
+      min = min_votes,
+      max = max_votes,
+      value = c(min_votes, 50000),
+      step = 10,
+      sep = ""
+    ),
+    
+    checkboxInput(inputId = "points", "Show points", value = TRUE),
+    
+    # Check boxes for scaling on number of movies ----
+    checkboxInput(inputId = "lines", "Show lines", value = TRUE)),
+    
+    card(
+      plotOutput(outputId = "scatterplot"),
+      textOutput(outputId = "description")
+    )
   )
-)
 
 # Define server ----------------------------------------------------------------
 
 server <- function(input, output, session) {
-  
   output$scatterplot <- renderPlot({
-    ggplot(clean_movies,
-           aes(x = .data[[input$x]], y = .data[[input$y]], color = .data[[input$z]])) +
-      geom_point()
+    raw_plot <- clean_movies |>
+      filter(
+        genre %in% input$genre,
+        between(year, input$range_year[1], input$range_year[2]),
+        between(votes, input$votes[1], input$votes[2])
+      ) |>
+        ggplot(aes(
+        x = .data[[input$x]],
+        y = .data [[input$y]],
+        color = .data[[input$z]]
+      ))  +
+        theme_classic()
+      
+      if (input$points) {
+        raw_plot <- raw_plot + geom_point()
+      }
+      
+      if (input$lines) {
+        raw_plot <- raw_plot + geom_smooth(aes(color = .data[[input$z]]), se = FALSE)
+      }
+      
+      return(raw_plot)
+      
   })
   
   output$description <- renderText({
-    paste0("The plot above, visualizes the relationship between ", input$x, " and ",
-           input$y, ", conditional on ", input$z, ".")
+    paste0(
+      "The plot above, visualizes the relationship between ",
+      input$x,
+      " and ",
+      input$y,
+      ", conditional on ",
+      input$z,
+      "."
+    )
   })
 }
 
