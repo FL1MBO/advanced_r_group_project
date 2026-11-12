@@ -1,6 +1,9 @@
 ---
 title: "2_movie_data_models"
 output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r}
@@ -12,36 +15,59 @@ library(ggplot2movies)
 clean_movies <- read_rds("clean_movies.rds")
 ```
 
+# Linear regression
 
-# Linear regression 
+## Exploring single linear regressions of relevant variables 
 
-## Exploring single linear regression per interesting variable 
-1. Voting
-2. Year
-3. Genre
-4. Length 
+1.  Year
 
+2.  Genre
 
-1. votes (Luisa)
-```{r}
-fit_votes <- lm(rating ~ 1 + votes, data = clean_movies) 
-summary(fit_votes)
+3.  Length
 
-plot_lm_votes <- fit_votes %>% 
-  {par(mfrow = c(2, 2)); plot(.)}
+4.  Number of votes
 
-```
+## 1. Year
 
-2. Year (Sanne)
+To investigate the correlation between the year of release of a movie
+and the rate it received from users, we fit a linear model with year as
+the predictor variable.
+
 ```{r}
 model_year <- lm(mean_rating ~ year, data=clean_movies)
-summary(linear_model)
+summary(model_year)
 
-plot_lm_year <- linear_model %>% 
+plot_lm_year <- model_year %>% 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
-### Impact of votes on rating
+Although the p-value for the slope is significant (given an alpha =
+0.001), the R^2^ value is low (0.09117), indicating that year of release
+cannot predict rating through a linear model.
+
+## 2. Genre
+
+## 3. Length
+
+We investigate here the correlation between the length and rating of a
+movie. A linear model is fitted with movie length as the predictor.
+
+```{r}
+fit_length <- 
+  lm(rating ~ 1 + length, data = clean_movies)   
+
+summary(fit_length)  
+
+#Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers 
+plot_lm_length <- fit_length %>% 
+  {par(mfrow = c(2, 2)); plot(.)}
+```
+
+Although the slope shows a low p-value, the adjusted R^2^ is very low
+(0.0009276), indicating that length cannot predict rating of a movie
+through a linear model.
+
+## 4. Votes
 
 We want to investigate whether the total number of votes can predict the
 average rating of a movie. We do this by fitting a linear model to the
@@ -51,13 +77,10 @@ data using votes as a predictor of rating.
 fit_votes <- lm(rating ~ 1 + votes, data = clean_movies) 
 
 summary(fit_votes)
-```
 
-# Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers
-
-```{r}
+#Visualise diagnostic plots of the linear model in one figure
 plot_lm_votes <- fit_votes %>% 
-  {par(mfrow = c(2, 2)); plot(.)}
+    {par(mfrow = c(2, 2)); plot(.)}
 ```
 
 Although the slope shows a low p-value, the adjusted R^2^ is low
@@ -81,9 +104,9 @@ AIC(fit_votes, fit_votes_log)
 ```
 
 When we log-transform the votes variable, we obtain a slightly higher
-adjusted R^2^ (0.04227) and the model is better !!worse because it is higher!! according to the AIC
-metric. Even if it remains weak, the correlation between amount of votes
-and rating is better explained by this second model.
+adjusted R^2^ (0.04227). However, the model is better worse according to
+the AIC metric. The weak correlations mean that neither model can
+reliably predict rating based on number of votes.
 
 We can visualize the two predicted fit lines on the data in a scatter
 plot of average rating against number of votes. Here, the votes are
