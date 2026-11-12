@@ -145,6 +145,14 @@ plot(linear_model)
 Compute the average rating per year per genre
 
 ```{r}
+subset_action <- clean_movies |> 
+  filter(Action == 1)
+  
+subset_action <- subset_action |>  group_by(year) |> 
+  mutate(mean_rating_action = mean(rating), mean_votes_action = mean(votes))
+  
+subset_action <- group_by(decade) |>
+  mutate(mean_rating_action_decades = mean(rating), mean_votes_action_decades = mean(votes))
 
 
 ```
