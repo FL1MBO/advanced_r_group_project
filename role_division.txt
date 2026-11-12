@@ -1,0 +1,7 @@
+Group project advanced R
+
+Role division 
+- Luisa: voting variables, linear regression
+- Sanne: temporal variables, shiny layout
+- Marlene: genres, plotting, tables
+- Kavish: length variable
