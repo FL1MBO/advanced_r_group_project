@@ -9,7 +9,7 @@ movies_per_decade <- readRDS("data/movies_per_decade.rds")
 
 ui <- fluidPage(
   # Create overal nagivation panes
-  navbarPage("Movie rating analysis", theme = shinytheme("lumen"),
+  navbarPage("Movie rating analysis", theme = theme("lumen"),
              # Tab for the temporal analysis
              tabPanel("Overview of data", fluid = TRUE,
                       mainPanel(
@@ -19,7 +19,7 @@ ui <- fluidPage(
                       # Sidebar with specific interactive elements for the temporal plots
                       sidebarLayout(
                         sidebarPanel(
-                          titlePanel("Temporal plot filters"),
+                          titlePanel("Temporal plot filters",
                           fluidRow(column(3, 
                              
                                           # slider for the range movie release per year
@@ -59,9 +59,9 @@ ui <- fluidPage(
                       mainPanel(plotOutput("plot_year"),
                                 plotOutput("plot_decade"),
                                 plotOutput("plot_genre"))
-                      ),
+                      )),
              # Second tab for the other plot
-             tabPanel("Voting analysis", fluid = TRUE,0
+             tabPanel("Voting analysis", fluid = TRUE,
                       # Sidebar with specific interactive elements for the temporal plots
                       sidebarLayout(
                         sidebarPanel(
@@ -72,16 +72,16 @@ ui <- fluidPage(
                                                       label = "Minimum number of votes",
                                                       min = min(movies$votes),
                                                       max = max(movies$votes),
-                                                      value = c(min(movies$votes,max(movies$votes)))))))),
+                                                      value = c(min(movies$votes,max(movies$votes))))))),
                       mainPanel(navset_card_underline(
                         title = "Analysis",
                         nav_panel("Plot rating decades", plotOutput("plot_votes")),
                         nav_panel("Regression", verbatimTextOutput("text_regression"), "Table regression", tableOutput("table_regression")),
+                        ))
                       )
-             ))
+                      )
              )
   )
-)
 
   
 
