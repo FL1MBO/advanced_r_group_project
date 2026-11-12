@@ -10,26 +10,36 @@ ui <- page_sidebar(
   title = "Analysis movie data",
   theme = bs_theme(preset = "cerulean"),
   sidebar = sidebar(h4("Temporal plot filters"),
+                    
+                    # Slider input for the range of years ----
                     sliderInput(
                       "range_years",
                       "Set the range of year of movie release:",
                       min = 1893,
                       max = 2005,
                       value = c(1893, 2005), step = 1, sep = "" ),
+                    
+                    # Slider input for the range of decades ----
                     sliderInput(
                       "range_decades",
                       "Set the range of decade of movie release:",
                       min = 1890,
                       max = 2000,
                       value = c(1890, 2000), step = 10, sep = ""),
+                    
+                    # Check boxes for scaling on votes ----
                     checkboxInput(
                       "votes",
                       "Scale ratings based on number of votes",
                       value = FALSE),
+                    
+                    # Check boxes for scaling on number of movies ----
                     checkboxInput(
                       "number_movies",
                       "Scale ratings based on number of movies released",
                       value = FALSE),
+                    
+                    # Multiple check boxes for the genres ----
                     checkboxGroupInput(
                       "genre",
                       label = "Choose a genre (a movie can have multiple genres)",
@@ -37,26 +47,31 @@ ui <- page_sidebar(
                       selected = c(1, 2, 3, 4, 5, 6)
                     )
   ),
-  navset_card_underline(
-    title = "Analysis",
+  navset_card_underline(title = "Analysis of movie data",
     
-    # Panel with summary ----
+    # Panel with summary text ----
     nav_panel("Summary", verbatimTextOutput("info_data"), "Table", tableOutput("table")),
     
     # Panel with table ----
-    #  nav_panel("Table", tableOutput("table")),
+    nav_panel("Table of top 10 movies on IMDb", tableOutput("table_10")),
     
     # Panel with plot per year ----
-    nav_panel("Plot rating yearly", plotOutput("plot_year")),
+    nav_panel("Plot yearly average rating", plotOutput("plot_year")),
     
     # Panel with plot per decades ----
-    nav_panel("Plot rating decades", plotOutput("plot_decade")),
+    nav_panel("Plot average rating over decades", plotOutput("plot_decade")),
     
-    # Panel with plot per genre
-    # Panel with plot per genre
+    # Panel with plot per genre ---
     nav_panel("Plot rating genres over time", plotOutput("plot_genre")),
-    nav_panel("Plot rating decades", plotOutput("plot_votes")),
-    nav_panel("Regression", verbatimTextOutput("text_regression"), "Table regression", tableOutput("table_regression")),
+    
+    # Panel with plot with votes over decades ---
+    nav_panel("Plot rating votes over decades", plotOutput("plot_votes")),
+    
+    # Panel with regression information ---
+    nav_panel("Regression", verbatimTextOutput("text_regression"),
+              "Table regression", tableOutput("table_regression"),
+              "Plot regression", plotOutput("plot_regression")
+              ),
     
   )
 )
@@ -147,7 +162,11 @@ The data is can be checked in the following table:"
 ### Part 8: Linear regression output 
   output$text_regression <- renderText({
   "The linear regression of ... resulted in this ... "})
+  
   output$table_regression <- renderTable(movies_per_decade)
+  
+  output$plot_regression <- renderPlot({})
+
 }
 
 shinyApp(ui = ui, server = server)
