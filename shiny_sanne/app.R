@@ -7,71 +7,69 @@ movies <- readRDS("data/clean_movies.rds")
 movies_per_decade <- readRDS("data/movies_per_decade.rds")
 
 
-ui <- page_sidebar(
-  title = "Temporal analysis movie data",
-  sidebar = sidebar(helpText("Movie data is presented per year"),
-  sliderInput(
-    "range_years",
-    "Set the range of year of movie release:",
-    min = 1893,
-    max = 2005,
-    value = c(1893, 2005), step = 1, sep = "" ),
-  sliderInput(
-    "range_decades",
-    "Set the range of decade of movie release:",
-    min = 1890,
-    max = 2000,
-    value = c(1890, 2000), step = 10, sep = ""),
-  checkboxInput(
-    "votes",
-    "Scale ratings based on number of votes",
-    value = FALSE),
-  checkboxInput(
-    "number_movies",
-    "Scale ratings based on number of movies released",
-    value = FALSE),
-  checkboxGroupInput(
-    "genre",
-    label = "Choose a genre (a movie can have multiple genres)",
-    choices = list("Action" = 1, "Animation" = 2, "Comedy" = 3, "Drama" = 4, "Documentary" = 5, "Romance" = 6),
-    selected = c(1, 2, 3, 4, 5, 6)
-  )
-  ),
-  navset_card_underline(
-    title = "Visualizations",
-    
-  # Panel with summary ----
-  nav_panel("Summary", verbatimTextOutput("info_data"), "Table", tableOutput("table")),
-    
-  # Panel with table ----
-  #  nav_panel("Table", tableOutput("table")),
-    
-  # Panel with plot per year ----
-  nav_panel("Plot rating yearly", plotOutput("plot_year")),
-  
-  # Panel with plot per decades ----
-  nav_panel("Plot rating decades", plotOutput("plot_decade")),
-  
-  # Panel with plot per genre
-  nav_panel("Plot rating genres over time", plotOutput("plot_genres"))
- )
-)
+ui <- fluidPage(
+  titlePanel("Movie rating exploration"),
+  fluidRow(
+    column(2, wellPanel(
+      h4("Temporal plot filters"),
+      sliderInput(
+        "range_years",
+        "Set the range of year of movie release:",
+        min = 1893,
+        max = 2005,
+        value = c(1893, 2005), step = 1, sep = "" ),
+      sliderInput(
+        "range_decades",
+        "Set the range of decade of movie release:",
+        min = 1890,
+        max = 2000,
+        value = c(1890, 2000), step = 10, sep = ""),
+      checkboxInput(
+        "votes",
+        "Scale ratings based on number of votes", value = FALSE),
+      checkboxInput(
+        "number_movies",
+        "Scale ratings based on number of movies released", value = FALSE),
+      checkboxGroupInput(
+        "genre",
+        label = "Choose a genre (a movie can have multiple genres)",
+        choices = list("Action" = 1, "Animation" = 2, "Comedy" = 3, "Drama" = 4, "Documentary" = 5, "Romance" = 6),
+        selected = c(1, 2, 3, 4, 5, 6)),
+      wellPanel(
+        h4("filters on votes"),
+        sliderInput(
+          "range_votes", 
+          "Minimum number of votes",
+          min = min(movies$votes), 
+          max = max(movies$votes), 
+          value = c(min(movies$votes,max(movies$votes))))
+        )
+      )),
+      navset_card_underline(
+        title = "Analysis",
+        
+        # Panel with summary ----
+        nav_panel("Summary", verbatimTextOutput("info_data"), "Table", tableOutput("table_decades")),
+        
+        # Panel with table ----
+        nav_panel("Table", tableOutput("table_1")),
+        
+        # Panel with plot per year ----
+        nav_panel("Plot rating yearly", plotOutput("plot_year")),
+        
+        # Panel with plot per decades ----
+        nav_panel("Plot rating decades", plotOutput("plot_decade")),
+        
+        # Panel with plot per genre
+        nav_panel("Plot rating genres over time", plotOutput("plot_genre")),
+        nav_panel("Plot rating decades", plotOutput("plot_votes")),
+        nav_panel("Regression", verbatimTextOutput("text_regression"), "Table regression", tableOutput("table_regression")),
+        
+        )
+      )
+    )
 
-## If you want to use cards instead of navigation panes
-#  card(
-#    card_header("Overview of the data"),
-#    verbatimTextOutput("info_data"),
-#    tableOutput("table")
-#  ),
-#  card(
-#    card_header("Plot of the average rating per year"),
-#    plotOutput("plot_year")
-#  ),
-#  card(
-#    card_header("Plot of the average rating per decade"),
-#    plotOutput("plot_decade")
-#  )
-#)
+
 
   
 
@@ -83,9 +81,12 @@ server <- function(input, output){
   })
 
 ## Part 2: table with the number of movies per decade
-  output$table <- renderTable(movies_per_decade)
+  output$table_decades <- renderTable(movies_per_decade)
+  
+## Part 3: add Luisa's table  
+  output$table_1 <- renderTable(movies_per_decade)
 
-## Part 3: plot of the average rating per year
+## Part 4: plot of the average rating per year
   output$plot_year <- renderPlot({ 
       movies |> filter(
         year >= input$range_years[1], 
@@ -98,7 +99,7 @@ server <- function(input, output){
       
   })
     
-### Part 4: Plot of the average rating per decade 
+### Part 5: Plot of the average rating per decade 
   output$plot_decade <- renderPlot({
       movies |> filter(
         decade >= input$range_decades[1], 
@@ -111,6 +112,39 @@ server <- function(input, output){
         scale_x_continuous(breaks = seq(1890, 2010, 10)) + 
         scale_y_continuous(breaks = seq(4, 7, 0.25))
     })
+
+### Part 6: Plot of the ratings per genre 
+  output$plot_genre <- renderPlot({
+    movies |> filter(
+      decade >= input$range_decades[1], 
+      decade <= input$range_decades[2]
+    ) |> 
+      ggplot(aes(decade, mean_rating_decade)) + 
+      geom_point() + geom_line() +
+      xlab("decade of movie release") +
+      ylab("mean rating per decade") + 
+      scale_x_continuous(breaks = seq(1890, 2010, 10)) + 
+      scale_y_continuous(breaks = seq(4, 7, 0.25))
+  })
+  
+### Part 7: boxplot with votes
+  output$plot_votes <- renderPlot({
+    movies |> filter(
+      decade >= input$range_decades[1], 
+      decade <= input$range_decades[2]
+    ) |> 
+      ggplot(aes(decade, mean_rating_decade)) + 
+      geom_point() + geom_line() +
+      xlab("decade of movie release") +
+      ylab("mean rating per decade") + 
+      scale_x_continuous(breaks = seq(1890, 2010, 10)) + 
+      scale_y_continuous(breaks = seq(4, 7, 0.25))
+  })
+  
+### Part 8: Linear regression output 
+  output$text_regression <- renderText({
+  "The linear regression of ... resulted in this ... "})
+  output$table_regression <- renderTable(movies_per_decade)
 }
 
 shinyApp(ui = ui, server = server)
