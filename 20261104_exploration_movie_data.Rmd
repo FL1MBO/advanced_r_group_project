@@ -298,9 +298,8 @@ AIC(fit_votes, fit_votes_log)
 ```
 
 When we log-transform the votes variable, we obtain a slightly higher
-adjusted R^2^ (0.04227) and the model is better according to the AIC
-metric. Even if it remains weak, the correlation between amount of votes
-and rating is better explained by this second model.
+adjusted R^2^ (0.04227) and the model is not better according to the AIC
+metric. The correlation between votes and rating is therefore weak and not explained well enough by either model. 
 
 We can visualize the two predicted fit lines on the data in a scatter
 plot of average rating against number of votes. Here, the votes are
