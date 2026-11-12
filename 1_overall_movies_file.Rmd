@@ -154,7 +154,6 @@ mean_ratings_decade
 saveRDS(mean_ratings_decade, "final_app/data/movies_per_decade.rds")
 ```
 
-
 ## Analysis plan
 
 We will focus on exploring the different variables of our dataset
