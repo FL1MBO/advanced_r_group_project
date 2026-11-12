@@ -1,6 +1,0 @@
-Group project advanced R
-
-Task division 
-- Luisa: voting variables, linear regression
-- Sanne: temporal variables, shiny layout
-- Marlene: genre variables, plotting, tables
