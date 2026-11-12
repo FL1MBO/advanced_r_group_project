@@ -233,11 +233,7 @@ This shiny app contains the follow tabs:
   })
   
   output$confidence_regression <- renderPrint({
-    coef(model(predict(
-      model, 
-      interval = "confidence", 
-      level = 0.95
-    )))
+    confint(model(), level = 0.950)
   })
   
   output$diagnostic_plots <- renderPlot({
