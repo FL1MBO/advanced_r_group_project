@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("ggplot2") # in case someone doesn't have it yet
 library(gt)
 library(ggplot2)
-library(halfmoon)
 library(ggplot2movies)
 library(tidyverse)
 library(stringr)
@@ -60,16 +59,17 @@ nrow(highest)
 lowest  <- filter(clean_movies, rating == min(rating))
 nrow(lowest)
 
-highest_table <- highest |>
-  select(title, year, rating, votes, genre) |>
+highest_table <- clean_movies |> filter(clean_movies, rating == max(rating)) |>
+  select(title, year, rating, votes, genre, length) |>
   gt() |>
   tab_header(title = "Highest rated movies on IMDB") |>
   cols_label(
     title = "Title",
     year  = "Year",
-    rating = "Rating",
+    rating = "Rating (1-10)",
     votes = "Votes",
-    genre = "Genre / combination"
+    genre = "Genre",
+    length = "Length (min)"
   ) |>
   fmt_number(columns = votes, decimals = 0) |>
   fmt_number(columns = rating, decimals = 1) |>
@@ -93,7 +93,7 @@ lowest_table <- lowest |>
     year  = "Year",
     rating = "Rating",
     votes = "Votes",
-    genre = "Genre / combination"
+    genre = "Genre"
   ) |>
   fmt_number(columns = votes, decimals = 0) |>
   fmt_number(columns = rating, decimals = 1) |>
@@ -139,171 +139,4 @@ print_group <- function(label, movies_df) {
 highest1000 <- filter(clean_movies, votes > 1000) |> filter(rating == max(rating))
 nrow(highest1000)
 lowest1000  <- filter(clean_movies, votes > 1000) |> filter(rating == min(rating))
-nrow(lowest1000)
-
-
-print_group("Highest rated movies when filtering for more than 1000 votes", highest1000)
-print_group("Lowest rated movies when filtering for more than 1000 votes", lowest1000)
-
-```
-
-
-# Overview Table by Genre
-```{r genre table}
-
-table(factor(clean_movies$genre))  # basic table
-
-genre_table <- clean_movies |>
-  filter(votes > 20) |>
-  group_by(genre) |>
-  summarise(
-    n_movies     = n(),
-    n_votes      = sum(votes),
-    avg_rating   = mean(rating),
-    wtd_rating   = sum(votes * rating) / n_votes) |>
-  gt() |>
-  tab_header(
-    title = "Genre representation of movies on IMDB"
-  ) |>
-  cols_label(
-    genre       = "Genre / genre combination",
-    n_movies    = "Number of movies",
-    n_votes     = "Total number of votes",
-    avg_rating  = "Average rating",
-    wtd_rating  = "Vote-weighted rating"
-  ) |>
-  fmt_number(
-    columns = c(n_movies, n_votes),
-    decimals = 0
-  ) |>
-  fmt_number(
-    columns = c(avg_rating, wtd_rating),
-    decimals = 1
-  ) |>
-  tab_style(
-    style = list(cell_text(weight = "bold")),
-    locations = cells_column_labels(everything())
-  ) |>
-  tab_footnote(
-    footnote = "Data from ggplot2's movies dataset.",
-    locations = cells_title(groups = "title")
-  )
-
-genre_table
-
-# The genres with more than 
-
-# code for table with the help of rbloggers to make it pretty: https://www.r-bloggers.com/2024/10/table-it-like-a-pro-print-ready-tables-in-r/
-```
-
-
-
-
-```{r}
-# already above, but repeated for clarity
-genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
-
-pair_levels <- apply(combn(genres, 2), 2, \(p) paste(p, collapse = " + "))
-# "Action + Animation", "Action + Comedy", ..., "Documentary + Romance"
-
-genre_levels <- c("None", "Unknown", "Crosslisted",
-                  genres, pair_levels)          # 9 + 15 = 24 levels
-
-genre_labels <- c("No genre", "Unknown", "Crosslisted (3+)",
-                  genres, pair_levels)
-
-# the base colors, get combined later
-genre_colors <- c(
-  None         = "grey50",
-  Unknown      = "grey",
-  Crosslisted  = "chartreuse4",
-  Action       = "gold",
-  Animation    = "blue",
-  Comedy       = "orange",
-  Drama        = "mediumpurple",
-  Documentary  = "hotpink",
-  Romance      = "violetred4"
-)
-
-clean_movies <- clean_movies |>
-  mutate(
-    n_genres = rowSums(pick(all_of(genres))),
-    genre = case_when(
-      is.na(n_genres) ~ "Unknown",
-      n_genres == 0   ~ "None",
-      n_genres >= 3   ~ "Crosslisted",
-      TRUE            ~ genre_combo      # exact match for singles AND pairs
-    ) |>
-      factor(levels = genre_levels)
-  )
-
-dual_genre <- clean_movies |>
-  filter(votes >= 100) |>
-  mutate(
-    parts = str_split(genre, " \\+ "),
-    genre_left  = map_chr(parts, 1),
-    genre_right = map_chr(parts, \(p) if (length(p) == 2) p[2] else NA_character_) |>
-              coalesce(genre_left) # makes single genres a full colored circle
-  )
-
-plot1 <- dual_genre |>
-  ggplot(aes(x = year, y = rating,
-             colour = genre_left, fill = genre_right)) +
-  halfmoon(alpha = 0.9, stroke = 0.3) +
-  scale_fill_manual(values = base_colors, name = "Genre (right)") +
-  scale_colour_manual(values = base_colors, name = "Genre (left)") +
-  scale_x_continuous(breaks = c(1900, 1910, 1920, 1930, 1940,
-                                1950, 1960, 1970, 1980, 1990, 2000)) +
-  scale_y_continuous(breaks = 1:10) +
-  theme_minimal()
-
-plot1
-```
-
-
-```{r}
-plot2 <- clean_movies|> 
-  mutate(genre = fct_na_value_to_level(
-      factor(genre, levels = genre_levels),
-      level = "NA")) |>
-  filter(votes >= 100) |>
-  ggplot(aes(x = year, fill = genre)) + 
-  geom_histogram(binwidth = 5, ) +
-  scale_fill_manual(breaks = genre_levels, 
-                    labels = genre_labels,
-                    values = genre_colors) +
-  scale_x_continuous(
-    breaks = c(1895, 1905, 1915, 1925, 1935, 1945,1955,1965, 1975, 1985, 1995, 2005)) +
-  theme_minimal()
-
-plot2
-```
-
-```{r}
-# plot3 <- clean_movies |> 
-#  mutate(votes_per_year = |>
-#  ggplot(aes(x = year, y = summarise(votes)) + 
-#  geom_line() +
-#  scale_x_continuous(
-#    breaks = c(1895, 1905, 1915, 1925, 1935, 1945,1955,1965, 1975, 1985, 1995, 2005)) +
-#  theme_minimal()
-
-# plot3
-```
-
-```{r general genre statistics}
-max_rating_per_genre <- 
-```
-
-# Linear Model: Rating ~ Genre
-*Significant effects: *
-*Assumptions: Homoscedascity of Residual Variance seems to be provided, as well as a normal distribution*
-```{r lm}
-fit <- lm(rating ~ genre, data = clean_movies)
-summary(fit)
-plot(fit)
-```
-
-```{r genre plot}
-
-```
+nrow(lowest1000
