@@ -57,7 +57,7 @@ The data contains:
   - Genre (action, animation, comedy, drama, documentary, romance,
     short)
 
-## Data tidying and transformation 
+## Data tidying and transformation
 
 We tidy the data by:
 
