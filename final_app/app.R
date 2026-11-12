@@ -3,31 +3,34 @@ library(bslib)
 library(tidyverse)
 library(ggplot2movies)
 library(gt)
+library(tools)
 library(DT)
 
 
 movies <- readRDS("data/clean_movies.rds")
-movies_per_decade <- readRDS("data/movies_per_decade.rds")
+
 genres <- c("No genre", "Crosslisted", "Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
+min_votes <- min(movies$votes)
+max_votes <- max(movies$votes)
 
 source("helpers.R")
 
 ui <- page_sidebar(
   title = "Analysis movie data",
   theme = bs_theme(preset = "cerulean"),
-  sidebar = sidebar(h4("Filters"),
+  sidebar = sidebar(h2("Filters"),
                     
                     # Slider input for the range of votes ---
-                    helpText("Adjusting the range of votes change the data table"),
+                    h6("Adjusting the range of votes change the data table and the plot"),
                     sliderInput(
                       "votes",
                       label = "Range of number of votes per movie:",
-                      min = min(clean_movies$votes), max = max(clean_movies$votes), 
-                      value = c(min(clean_movies$votes), max(clean_movies$votes))),
+                      min = min(movies$votes), max = max(movies$votes), 
+                      value = c(min(movies$votes), max(movies$votes))),
                     
                     
                     # Multiple check boxes for the genres ----
-                    helpText("The genre boxes work with the top 10 data and the plot:"),
+                    h6("The genre boxes work with the top 10 data and the plot:"),
                     checkboxGroupInput(inputId = "genre",
                                        label = "Choose a genre",
                                        choices = list(
@@ -41,9 +44,58 @@ ui <- page_sidebar(
                                          "Romance" = "Romance"),
                                        selected = genres),
                     
+                    h6("Fit a the plot based on the following options:"),
                     
+                    # Select input for X-axis
+                    selectInput(
+                      inputId = "x",
+                      label = "X-axis:",
+                      choices = c(
+                        "Number of votes" = "votes",
+                        "Rating" = "rating",
+                        "Length" = "length",
+                        "Year" = "year",
+                        "Genre" = "genre"
+                      ),
+                      selected = "year"
+                    ),
+                    # Select input for Y-axis --- 
+                    selectInput(
+                      inputId = "y",
+                      label = "Y-axis:",
+                      choices = c(
+                        "Number of votes" = "votes",
+                        "Rating" = "rating",
+                        "Length" = "length",
+                        "Year" = "year",
+                        "Genre" = "genre"
+                      ),
+                      selected = "rating"
+                    ),
+                    
+                    # Select input for the colours --- 
+                    selectInput(
+                      inputId = "z",
+                      label = "Color by:",
+                      choices = c(
+                        "Number of votes" = "votes",
+                        "Rating" = "rating",
+                        "Length" = "length",
+                        "Year" = "year",
+                        "Genre" = "genre"
+                      ),
+                      selected = "genre"
+                    ),
+                    # Slider input for filtering out low votes ----
+                    
+                    checkboxInput(inputId = "points", "Show points", value = TRUE),
+                    
+                    # Check boxes for scaling on number of movies ----
+                    checkboxInput(inputId = "lines", "Show lines", value = TRUE),
+                    
+  
                     # Slider input for the range of years ----
-                    sliderInput(inputId ="range_years",
+                    sliderInput(inputId ="range_year",
                                 label = "Set the range of year of movie release:",
                                 min = 1893,
                                 max = 2005,
@@ -53,7 +105,7 @@ ui <- page_sidebar(
                     
                     
                     # Selection for linear model 
-                    helpText("Fit a linear model for rating based on:"),
+                    h6("Fit a linear model for rating based on:"),
                     checkboxGroupInput("predictor", "Select predictor(s):",
                                        choices = c("Year" = "year", 
                                                    "Length" = "length",
@@ -82,7 +134,8 @@ ui <- page_sidebar(
                         nav_panel("Table of top 10 movies on IMDb", gt_output("table_10")),
                         
                         # Panel with the interactive plot ---
-                        nav_panel("Plot yearly average rating", plotOutput("plot_year")),
+                        nav_panel("Plot yearly average rating", plotOutput("scatterplot"),
+                                  textOutput("description")),
                         
                         # Panel with regression summary ---
                         nav_panel("Regression", verbatimTextOutput("summary_regression"), 
@@ -95,7 +148,7 @@ ui <- page_sidebar(
 )
 )
 
-server <- function(input, output){
+server <- function(input, output, session){
   
   ## Part 1: information on the data
   output$info_data <- renderText({
@@ -124,7 +177,7 @@ This shiny app contains the follow tabs:
   output$table_votes <- DT::renderDataTable({
     req(input$votes)
     
-    table_votes(data = clean_movies,
+    table_votes(data = movies,
                 min = input$votes[1],
                 max = input$votes[2], 
                 cols = c(1, 4:15)
@@ -132,9 +185,8 @@ This shiny app contains the follow tabs:
     options = list(packageLength = 20, scrollX = TRUE))
   
   ## Part 3: add Luisa's table  
-  output$table_10 <- render_gt(
-    {
-      clean_movies |>
+  output$table_10 <- render_gt({
+      movies |>
         select(title, year, rating, votes, genre, length)|>
         filter(genre == input$genre)|>
         arrange(desc(rating)) |>
@@ -161,18 +213,44 @@ This shiny app contains the follow tabs:
         )
     })
   
-  ## Part 4: plot of the average rating per year
-  output$plot_year <- renderPlot({ 
-    movies |> filter(
-      year >= input$range_years[1], 
-      year <= input$range_years[2]
-    ) |> 
-      ggplot(aes(year, mean_rating)) + 
-      geom_line() +
-      xlab("year of movie release") +
-      ylab("mean rating") + scale_x_continuous(breaks = seq(1890, 2010, 10))
+  ## Part 4: Interactive plot
+  output$scatterplot <- renderPlot({
+    raw_plot <- movies |>
+        filter(
+          genre %in% input$genre,
+          between(year, input$range_year[1], input$range_year[2]),
+          between(votes, input$votes[1], input$votes[2])
+        ) |>
+      ggplot(aes(
+          x = .data[[input$x]],
+          y = .data [[input$y]],
+          color = .data[[input$z]]
+        ))  +
+        theme_classic()
+      
+      if (input$points) {
+        raw_plot <- raw_plot + geom_point()
+      }
+      
+      if (input$lines) {
+        raw_plot <- raw_plot + geom_smooth(aes(color = .data[[input$z]]), se = FALSE)
+      }
+      
+      return(raw_plot)
+      
+    })
     
-  })
+    output$description <- renderText({
+      paste0(
+        "The plot above, visualizes the relationship between ",
+        input$x,
+        " and ",
+        input$y,
+        ", conditional on ",
+        input$z,
+        "."
+      )
+    })
   
   ### Part 5: Plot of the average rating per decade 
   output$plot_decade <- renderPlot({
@@ -221,7 +299,7 @@ This shiny app contains the follow tabs:
     req(input$predictor) 
     all_predictors <- paste(input$predictor, collapse = " + ")
     formula_regression <- paste("rating ~", all_predictors)
-    lm(as.formula(formula_regression), data = clean_movies)
+    lm(as.formula(formula_regression), data = movies)
   })
   
   output$summary_regression <- renderPrint({
@@ -233,11 +311,7 @@ This shiny app contains the follow tabs:
   })
   
   output$confidence_regression <- renderPrint({
-    coef(model(predict(
-      model, 
-      interval = "confidence", 
-      level = 0.95
-    )))
+    confint(model(), level = 0.950)
   })
   
   output$diagnostic_plots <- renderPlot({
