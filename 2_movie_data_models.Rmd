@@ -29,13 +29,25 @@ clean_movies <- read_rds("clean_movies.rds")
 
 ## 1. Year
 
+To investigate the correlation between the year of release of a movie
+and the rate it received from users, we fit a linear model with year as
+the predictor variable.
+
 ```{r}
 model_year <- lm(mean_rating ~ year, data=clean_movies)
-summary(linear_model)
+summary(model_year)
 
-plot_lm_year <- linear_model %>% 
+plot_lm_year <- model_year %>% 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
+
+Although the p-value for the slope is significant (given an alpha =
+0.001), the R^2^ value is low (0.09117), indicating that year of release
+cannot predict rating through a linear model.
+
+## 2. Genre
+
+## 3. Length
 
 ## 4. Votes
 
