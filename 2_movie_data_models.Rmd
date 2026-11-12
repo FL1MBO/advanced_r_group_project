@@ -47,6 +47,11 @@ cannot predict rating through a linear model.
 
 ## 2. Genre
 
+```{r}
+
+
+```
+
 ## 3. Length
 
 We investigate here the correlation between the length and rating of a
@@ -113,7 +118,6 @@ plot of average rating against number of votes. Here, the votes are
 colored by the percentage of users who awarded a 10/10 rate.
 
 ```{r}
-
 votes_rating_plot <- ggplot(
   clean_movies, 
       aes(votes, rating)) +
