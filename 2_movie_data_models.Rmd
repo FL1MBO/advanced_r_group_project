@@ -37,7 +37,7 @@ the predictor variable.
 model_year <- lm(mean_rating ~ year, data=clean_movies)
 summary(model_year)
 
-plot_lm_year <- model_year %>% 
+plot_lm_year <- model_year |> 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
@@ -59,7 +59,7 @@ fit_length <-
 summary(fit_length)  
 
 #Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers 
-plot_lm_length <- fit_length %>% 
+plot_lm_length <- fit_length |> 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
@@ -79,7 +79,7 @@ fit_votes <- lm(rating ~ 1 + votes, data = clean_movies)
 summary(fit_votes)
 
 #Visualise diagnostic plots of the linear model in one figure
-plot_lm_votes <- fit_votes %>% 
+plot_lm_votes <- fit_votes |> 
     {par(mfrow = c(2, 2)); plot(.)}
 ```
 

@@ -140,12 +140,12 @@ In the following table, basic statistics for the relevant numerical
 variables in the dataset are summarised
 
 ```{r}
-movies %>% 
-  select(2:6) %>% 
+movies |> 
+  select(2:6) |> 
   pivot_longer(everything(), 
                names_to = "variable", 
-               values_to ="value") %>%
-  group_by(variable) %>% 
+               values_to ="value") |>
+  group_by(variable) |> 
   summarise(
     Mean = mean(value, na.rm = TRUE),
     Minimum = min(value, na.rm = TRUE),
@@ -162,12 +162,12 @@ rating, and number of votes.
 
 ```{r}
 
-movies %>% 
+movies |> 
   pivot_longer(
   cols = 2:6,   
   names_to = "variable",      
   values_to = "value"         
-) %>% 
+) |> 
   ggplot(aes(x = value, fill = variable, colour = variable)) +
   geom_density(alpha = 0.5) +
   facet_wrap(
@@ -199,10 +199,10 @@ between rating points.
 ```{r}
 
 heatmap_rating <- 
-  clean_movies %>% 
-  select(title, rating, r1:r10) %>% 
-  arrange(desc(rating)) %>% 
-  slice_head(n = 100) %>% 
+  clean_movies |> 
+  select(title, rating, r1:r10) |> 
+  arrange(desc(rating)) |> 
+  slice_head(n = 100) |> 
   {
     matrix_rating <- as.matrix(select(., r1:r10))
     rownames(matrix_rating) <- .$title
