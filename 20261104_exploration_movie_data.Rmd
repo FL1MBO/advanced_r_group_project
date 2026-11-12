@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(ggplot2movies)
+library(gt)
 ```
 
 # Movie dataset initial exploration
@@ -289,7 +290,7 @@ AIC(fit_votes, fit_votes_log)
 ```
 
 When we log-transform the votes variable, we obtain a slightly higher
-adjusted R^2^ (0.04227) and the model is better according to the AIC
+adjusted R^2^ (0.04227) and the model is better !!worse because it is higher!! according to the AIC
 metric. Even if it remains weak, the correlation between amount of votes
 and rating is better explained by this second model.
 

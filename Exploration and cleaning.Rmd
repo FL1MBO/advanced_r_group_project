@@ -11,11 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r library setup}
 #install.packages("ggplot2") # in case someone doesn't have it yet
-
 library(ggplot2)
 library(ggplot2movies)
 library(tidyverse)
-
 ```
 
 # Movie dataset initial exploration
@@ -168,7 +166,7 @@ plot2
 
 ```{r}
 # plot3 <- clean_movies |> 
-#  mutate(votes_per_year = |>
+#  mutate(votes_per_year = ) |>
 #  ggplot(aes(x = year, y = summarise(votes)) + 
 #  geom_line() +
 #  scale_x_continuous(
