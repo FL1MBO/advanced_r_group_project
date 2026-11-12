@@ -10,10 +10,12 @@ editor_options:
 ```{r load packages, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(ggplot2)
 library(tidyverse)
 library(ggplot2movies)
 library(shiny)
-library(superheat)
+library(gt)
+library(stringr)
 ```
 
 # Shiny app
@@ -128,7 +130,7 @@ clean_movies <- movies |>
   filter(votes >= cutoff_votes)|> 
   mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),
                   if_else(year %in% seq(1900, 1909, 1), paste0("190",(year - 1900) %/% 10 * 10), 
-                  if_else(year %in% seq(1910, 1999, 1), paste0("19",(year - 1900) %/% 10 * 10), 
+                  if_else(year %in% seq(1910, 1999, 1), paste0("19",(year - 1900) %/% 10 * 10), # introducing decade column
                           "1890")))) |> arrange (year) |> 
   mutate_at(vars(decade), as.numeric)
 
@@ -138,6 +140,74 @@ saveRDS(clean_movies, "final_app/data/clean_movies.rds")
 
 # Analysis
 
+We focus on exploring the different variables of our dataset
+individually and testing whether they can predict the
+rating of a movie.
+
+First, some exploration of highest and lowest rated movies, also in our shiny.
+
+## Highest and lowest rated movies
+
+*Here we consider all the genre combinations, but we made it simpler in the final app*
+```{r}
+vote_cutoff = 1000
+
+# finding the highest and lowest rated movies on IMDB and their statistics
+highest_table <- clean_movies |> 
+  filter(votes >= vote_cutoff) |>
+  filter(rating == max(rating)) |>
+  select(title, year, rating, votes, genre_combo, length) |>
+  gt() |>
+  tab_header(title = str_glue("Highest rated of movies with more than {vote_cutoff} votes on IMDB")) |>
+  cols_label(
+    title = "Title",
+    year  = "Year",
+    rating = "Rating (1-10)",
+    votes = "Votes",
+    genre_combo = "Genre(s)",
+    length = "Length (min)"
+  ) |>
+  fmt_number(columns = votes, decimals = 0) |>
+  fmt_number(columns = rating, decimals = 1) |>
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = cells_column_labels(everything())
+  ) |>
+  tab_footnote(
+    footnote = "Data from ggplot2's movies dataset.",
+    locations = cells_title(groups = "title")
+  )
+
+highest_table
+
+lowest_table <- clean_movies |> 
+  filter(votes > vote_cutoff) |>
+  filter(rating == min(rating)) |>
+  select(title, year, rating, votes, genre_combo, length) |>
+  gt() |>
+  tab_header(title = str_glue("Lowest rated of movies with more than {vote_cutoff} votes on IMDB")) |>
+  cols_label(
+    title = "Title",
+    year  = "Year",
+    rating = "Rating (1-10)",
+    votes = "Votes",
+    genre_combo = "Genre(s)",
+    length = "Length (min)"
+  ) |>
+  fmt_number(columns = votes, decimals = 0) |>
+  fmt_number(columns = rating, decimals = 1) |>
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = cells_column_labels(everything())
+  ) |>
+  tab_footnote(
+    footnote = "Data from ggplot2's movies dataset.",
+    locations = cells_title(groups = "title")
+  )
+
+lowest_table
+```
+
 ## Temporal
 
 *Attempted to analyse the data based on the decades. Later decided to
@@ -145,11 +215,9 @@ focus on the years, as we incorporated a slider into the shiny plot and
 knew that specific decades could still be selected that way.*
 
 ```{r}
-# Extra column for decades 
-
 #Datasets used for plotting of the variable year
 mean_ratings_decade <- clean_movies |> 
-  group_by(decade) |> 
+  group_by(decade) |>  
   mutate(mean_rating_decade = mean(rating))  |>  tally(name = "number of movies") 
 
 mean_ratings_decade
@@ -157,26 +225,72 @@ mean_ratings_decade
 saveRDS(mean_ratings_decade, "final_app/data/movies_per_decade.rds")
 ```
 
-## Analysis plan
+## Overview Table by Genre
 
-We will focus on exploring the different variables of our dataset
-individually and testing whether different variables can predict the
-rating of a movie.
+```{r genre table}
+table(factor(clean_movies$genre))  # basic table with number of movies per genre
 
-In this file, we included summary statistics of the dataset,
-distributions of relevant variables, and general visualisations of data.
+# genre assignment with accounting for multiple assignments per movie instead of labelling them as crosslisted
+genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
+
+clean_movies <- mutate(clean_movies,
+    genre_combo = apply(
+      pick(all_of(genres)), 1,
+      \(x) paste(genres[as.logical(x)], collapse = " + ")
+    ),
+    genre_combo = factor(ifelse(genre_combo == "", "None", genre_combo))
+  )
+
+genre_table <- clean_movies |>
+  filter(votes > 20) |>
+  group_by(genre_combo) |> # either put in genre or genre_combo
+  summarise(
+    n_movies     = n(),
+    n_votes      = sum(votes),
+    avg_rating   = mean(rating),
+    wtd_rating   = sum(votes * rating) / n_votes) |>
+  gt() |>
+  tab_header(
+    title = "Genre representation of movies on IMDB"
+  ) |>
+  cols_label(
+    genre_combo       = "Genre / genre combination",
+    n_movies    = "Number of movies",
+    n_votes     = "Total number of votes",
+    avg_rating  = "Average rating",
+    wtd_rating  = "Vote-weighted rating" # those movies with more votes have higher influence on average
+  ) |>
+  fmt_number(
+    columns = c(n_movies, n_votes),
+    decimals = 0
+  ) |>
+  fmt_number(
+    columns = c(avg_rating, wtd_rating),
+    decimals = 1
+  ) |>
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = cells_column_labels(everything())
+  ) |>
+  tab_footnote(
+    footnote = "Data from ggplot2's movies dataset.",
+    locations = cells_title(groups = "title")
+  )
+
+genre_table
+
+# code for table with the help of rbloggers to make it pretty: https://www.r-bloggers.com/2024/10/table-it-like-a-pro-print-ready-tables-in-r/
+```
 
 ## Data distributions
 
 The distribution of each relevant numerical variable can be visualized
-in the following density graphs. These are: year, length, budget,
-rating, and number of votes.
+in the following density graphs. These are: year, length, rating, and number of votes.
 
 ```{r}
-
-movies |> 
+clean_movies |> 
   pivot_longer(
-  cols = 2:6,   
+  cols = c(year, length, rating, votes),   
   names_to = "variable",      
   values_to = "value"         
 ) |> 
@@ -188,13 +302,12 @@ movies |>
   labeller = as_labeller(c(
     "year" = "Year",
     "length"= "Length",
-    "budget"= "Budget",
     "rating"= "Rating",
     "votes"= "Number of votes"))) +
   scale_fill_brewer(palette = "Set2") +
   scale_color_brewer(palette = "Set2") +
   labs(x = NULL, y = "Density") +
-  theme_minimal(base_size = 12) + 
+  theme_minimal() + 
   theme(legend.position = "none")
 
 ```
