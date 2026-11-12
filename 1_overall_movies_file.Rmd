@@ -113,8 +113,9 @@ clean_movies <- movies |>
 saveRDS(clean_movies, "final_app/data/clean_movies.rds")
 ```
 
+Attempted to analyse the data based on the decades. Later decided to
+focus on the years, as we incorporated a slider into the shiny plot.
 
-Attempted to analyse the data based on the decades. Later decided to focus on the years, as we incorporated a slider into the shiny plot. 
 ```{r}
 # Extra for decades 
 #Datasets used for plotting of the variable year
@@ -126,7 +127,6 @@ mean_ratings_decade
 
 saveRDS(mean_ratings_decade, "final_app/data/movies_per_decade.rds")
 ```
-
 
 ## Analysis plan
 
@@ -200,6 +200,7 @@ visualize whether these top-rated movies have similar distribution
 between rating points.
 
 ```{r}
+library(superheat)
 
 heatmap_rating <- 
   clean_movies %>% 
