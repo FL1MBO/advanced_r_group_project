@@ -17,7 +17,7 @@ clean_movies <- read_rds("clean_movies.rds")
 
 # Linear regression
 
-## Exploring single linear regressions of relevant variables 
+## Exploring single linear regressions of relevant variables
 
 1.  Year
 
