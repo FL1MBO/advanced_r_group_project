@@ -163,6 +163,10 @@ genres), or to select certain years even (along with certain decades).
 Create subsets based on the movie genres
 
 ```{r}
+clean_movies <- clean_movies |> 
+  group_by(year) |> 
+  mutate(mean_rating = mean(rating), mean_votes = mean(votes)) 
+
 # add variable decade
 clean_movies <- clean_movies  |> 
   mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),

@@ -9,7 +9,36 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggplot2movies)
 
-clean_movies <- read_rds(clean_movies.rds)
+clean_movies <- read_rds("clean_movies.rds")
+```
+
+
+# Linear regression 
+
+## Exploring single linear regression per interesting variable 
+1. Voting
+2. Year
+3. Genre
+4. Length 
+
+
+1. votes (Luisa)
+```{r}
+fit_votes <- lm(rating ~ 1 + votes, data = clean_movies) 
+summary(fit_votes)
+
+plot_lm_votes <- fit_votes %>% 
+  {par(mfrow = c(2, 2)); plot(.)}
+
+```
+
+2. Year (Sanne)
+```{r}
+model_year <- lm(mean_rating ~ year, data=clean_movies)
+summary(linear_model)
+
+plot_lm_year <- linear_model %>% 
+  {par(mfrow = c(2, 2)); plot(.)}
 ```
 
 ### Impact of votes on rating
@@ -28,8 +57,7 @@ summary(fit_votes)
 
 ```{r}
 plot_lm_votes <- fit_votes %>% 
-  {par(mfrow = c(2, 2));
-    plot(.)}
+  {par(mfrow = c(2, 2)); plot(.)}
 ```
 
 Although the slope shows a low p-value, the adjusted R^2^ is low
