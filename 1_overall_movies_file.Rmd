@@ -204,11 +204,13 @@ movies |>
 ### Visualize rating patterns in the top 20 movies
 
 We consider the 20 movies with the highest average rating and plot in a
-heatmap the percentage of votes awarding 1-10 ratings. This visualizes
-that, although these movies are equally highly rated, there are
-differences in the percentage of each score that can be assigned by
-users. For example, most have a 100% of 10/10 votes, while movie "The
-phantom submarine" has a more heterogeneous distribution of scores.
+heatmap the percentage of votes awarding 1-10 ratings.
+
+This visualizes that, although these movies are equally highly rated,
+there are differences in the percentage of each score that can be
+assigned by users. For example, most have a 100% of 10/10 votes, while
+movie "The phantom submarine" has a more heterogeneous distribution of
+scores.
 
 ```{r}
 top_movies_rating <- clean_movies |> 
