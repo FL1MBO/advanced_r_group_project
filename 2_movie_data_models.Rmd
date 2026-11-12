@@ -63,7 +63,9 @@ plot_lm_length <- fit_length %>%
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
-Although the slope shows a low p-value, the adjusted R^2^ i
+Although the slope shows a low p-value, the adjusted R^2^ is very low
+(0.0009276), indicating that length cannot predict rating of a movie
+through a linear model.
 
 ## 4. Votes
 
