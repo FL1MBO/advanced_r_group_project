@@ -10,6 +10,18 @@ library(tidyverse)
 library(ggplot2movies)
 ```
 
+# Shiny apps 
+```{r}
+library(shiny)
+
+runApp("shiny_sanne")
+
+runApp("app_Luisa")
+
+getwd()
+
+```
+
 # Movie dataset
 
 This dataset is taken from the package `ggplot2movies`. [link to the
@@ -151,6 +163,10 @@ genres), or to select certain years even (along with certain decades).
 Create subsets based on the movie genres
 
 ```{r}
+clean_movies <- clean_movies |> 
+  group_by(year) |> 
+  mutate(mean_rating = mean(rating), mean_votes = mean(votes)) 
+
 # add variable decade
 clean_movies <- clean_movies  |> 
   mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),
@@ -168,21 +184,146 @@ by_decades <- clean_movies |> group_by(decade)
 
 overview_decades <- by_decades |> tally(name = "number of movies")
 
+
+saveRDS(clean_movies, "clean_movies.rds")
 saveRDS(clean_movies, "shiny_sanne/data/clean_movies.rds")
 saveRDS(overview_decades, "shiny_sanne/data/movies_per_decade.rds")
-
-table(clean_movies$decades, clean_movies$mean_votes_decade)
-
 ```
 
-# Shiny apps 
+
+
+
+
+## Summary statistics
+
+In the following table, basic statistics for the relevant numerical
+variables in the dataset are summarised
+
 ```{r}
-library(shiny)
+movies %>% 
+  select(2:6) %>% 
+  pivot_longer(everything(), 
+               names_to = "variable", 
+               values_to ="value") %>%
+  group_by(variable) %>% 
+  summarise(
+    Mean = mean(value, na.rm = TRUE),
+    Minimum = min(value, na.rm = TRUE),
+    Maximum = max(value, na.rm = TRUE),
+    Missing = sum(is.na(value))) %>% 
+  gt() %>% 
+  fmt_number(columns = c(Mean, Minimum, Maximum, Missing),
+             decimals = 2) %>%
+  tab_header(
+    title = "Movies - Summary statistics"
+  )
+```
 
-runApp("shiny_sanne")
+## Visualize data distributions
 
-runApp("app_Luisa")
+The distribution of each relevant numerical variable can be visualized
+in the following density graphs. These are: year, length, budget,
+rating, and number of votes.
 
-getwd()
+```{r}
+
+movies %>% 
+  pivot_longer(
+  cols = 2:6,   
+  names_to = "variable",      
+  values_to = "value"         
+) %>% 
+  ggplot(aes(x = value, fill = variable, colour = variable)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(
+    ~ variable, 
+    scales = "free",
+  labeller = as_labeller(c(
+    "year" = "Year",
+    "length"= "Length",
+    "budget"= "Budget",
+    "rating"= "Rating",
+    "votes"= "Number of votes"))) +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2") +
+  labs(x = NULL, y = "Density") +
+  theme_minimal(base_size = 12) + 
+  theme(legend.position = "none")
 
 ```
+
+## Visualize rating patterns
+
+We consider the 100 movies with the highest average rating and plot in a
+heatmap the percentage of votes awarding 1-10 ratings. This will
+visualize whether these top-rated movies have similar distribution
+between rating points.
+
+```{r}
+library(superheat)
+
+heatmap_rating <- 
+  clean_movies %>% 
+  select(title, rating, r1:r10) %>% 
+  arrange(desc(rating)) %>% 
+  slice_head(n = 100) %>% 
+  {
+    matrix_rating <- as.matrix(select(., r1:r10))
+    rownames(matrix_rating) <- .$title
+    superheat(
+      matrix_rating,
+      pretty.order.rows = FALSE,        
+      yr = .$rating,                  
+      yr.plot.type = "bar",
+      yr.axis.name = "Average Rating",
+      yr.bar.col = "lightblue4",
+      heat.col.scheme = "viridis",
+      grid.hline.col = "white",
+      grid.vline.col = "white",
+      left.label.text.size = 2.5,
+      bottom.label.text.angle = 0
+    )
+  }
+```
+
+
+#### Impact of 10/10 votes on average rating
+
+We also investigate whether the percentage of users who awarded a 10/10
+rating (r10 variable) can predict the average rating of a movie.
+
+```{r}
+fit_r10 <- 
+  lm(rating ~ 1 + r10, 
+     data = clean_movies) 
+
+summary(fit_r10)
+
+# Visualise diagnostic plots of the linear model in one figure
+plot_lm_r10 <- fit_r10 %>% 
+  {par(mfrow = c(2, 2));
+    plot(.)}
+# no clear violations of the requirements
+```
+
+The low p-value and adjusted R\^2 of 0.1789 reveal a correlation,
+although weak, between r10 and rating. This can be visualized on the
+following scatter plot of the r10 data.
+
+```{r}
+r10_rating_plot <- ggplot(
+  clean_movies, 
+      aes(r10, rating)) +
+      geom_point() +
+  labs(dictionary = c(
+    rating = "Average rating /10",
+    r10 = "Percentage of 10/10 votes")) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + x, 
+              se = FALSE, 
+              color = "red3", 
+              linetype = 1)
+
+print(r10_rating_plot)
+```
+
