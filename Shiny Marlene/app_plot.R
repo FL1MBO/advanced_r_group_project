@@ -1,94 +1,3 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
-
-library(gt)
-library(ggplot2)
-library(ggplot2movies)
-library(tidyverse)
-library(stringr)
-library(shiny)
-library(bslib)
-
-movies <- movies
-
-min_date <- min(movies$year)
-max_date <- max(movies$year)
-
-# genre assignment with accounting for multiple assignments per movie
-genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
-
-clean_movies <- movies |>
-  select(-budget, -mpaa) |>
-  mutate(
-    genre_combo = apply(
-      pick(all_of(genres)), 1,
-      \(x) paste(genres[as.logical(x)], collapse = " + ")
-    ),
-    genre = factor(ifelse(genre_combo == "", "None", genre_combo))
-  )
-
-# finding the highest and lowest rated movies on IMDB and their statistics
-
-# Define UI for application that draws a table
-ui <- page_sidebar(
-  
-  sidebar = sidebar(
-    
-    HTML(paste0("Movies released in the following date will be considered 
-                 Pick a date range between ", min_date, " and ", max_date, ".")),
-    
-    br(), br(),
-    
-    dateInput(inputId = "date",
-              label = "Select date:",
-              value = "2013",
-              min = min_decade, max = max_decade)
-  ),
-  
-  card(
-    tableOutput(outputId = "table")
-  )
-)
-
-# Define server logic required to draw a table
-server <- function(input, output, session) {
-  
-  output$table <- renderTable({
-    highest_table <- clean_movies |> filter(rating == max(rating)) |>
-      select(title, year, rating, votes, genre, length) |> filter(thtr_rel_date >= as.POSIXct(input$date)) |>
-      gt() |>
-      tab_header(title = "Highest rated movies on IMDB") |>
-      cols_label(
-        title = "Title",
-        year  = "Year",
-        rating = "Rating (1-10)",
-        votes = "Votes",
-        genre = "Genre",
-        length = "Length (min)"
-      ) |>
-      fmt_number(columns = votes, decimals = 0) |>
-      fmt_number(columns = rating, decimals = 1) |>
-      tab_style(
-        style = list(cell_text(weight = "bold")),
-        locations = cells_column_labels(everything())
-      ) |>
-      tab_footnote(
-        footnote = "Data from ggplot2's movies dataset.",
-        locations = cells_title(groups = "title")
-      )
-  })
-  
-}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
-
 
 # Load packages ----------------------------------------------------------------
 
@@ -102,8 +11,6 @@ library(ggplot2movies)
 # Load data --------------------------------------------------------------------
 
 movies <- movies
-
-genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
 
 clean_movies <- movies |>
   select(-budget, -mpaa) |>
