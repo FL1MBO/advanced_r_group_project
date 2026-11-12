@@ -362,3 +362,16 @@ r10_rating_plot <- ggplot(
 
 print(r10_rating_plot)
 ```
+
+
+# Shiny apps 
+```{r}
+library(shiny)
+
+runApp("shiny_sanne")
+
+runApp("app_Luisa")
+
+getwd()
+
+```

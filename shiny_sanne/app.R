@@ -40,19 +40,22 @@ ui <- page_sidebar(
   navset_card_underline(
     title = "Visualizations",
     
-    # Panel with summary ----
-    nav_panel("Summary", verbatimTextOutput("info_data"), "Table", tableOutput("table")),
+  # Panel with summary ----
+  nav_panel("Summary", verbatimTextOutput("info_data"), "Table", tableOutput("table")),
     
-    # Panel with table ----
+  # Panel with table ----
   #  nav_panel("Table", tableOutput("table")),
     
-    # Panel with plot 1 ----
-    nav_panel("Plot rating yearly", plotOutput("plot_year")),
-    # Panel with plot 1 ----
-    nav_panel("Plot rating decades", plotOutput("plot_decade")),
-    
-    
-  ))
+  # Panel with plot per year ----
+  nav_panel("Plot rating yearly", plotOutput("plot_year")),
+  
+  # Panel with plot per decades ----
+  nav_panel("Plot rating decades", plotOutput("plot_decade")),
+  
+  # Panel with plot per genre
+  nav_panel("Plot rating genres over time", plotOutput("plot_genres"))
+ )
+)
 
 ## If you want to use cards instead of navigation panes
 #  card(
