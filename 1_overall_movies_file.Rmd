@@ -14,19 +14,6 @@ library(ggplot2movies)
 library(superheat)
 ```
 
-# Shiny apps
-
-```{r}
-library(shiny)
-
-runApp("shiny_sanne")
-
-runApp("app_Luisa")
-
-getwd()
-
-```
-
 # Movie dataset
 
 This dataset is taken from the package `ggplot2movies`. [link to the
@@ -215,3 +202,14 @@ heatmap_rating <-
     )
   }
 ```
+
+# Shiny apps
+
+```{r}
+library(shiny)  
+runApp("shiny_sanne")  
+runApp("app_Luisa")  
+runApp("Shiny_Marlene")
+```
+
+# 
