@@ -45,6 +45,13 @@ movies <- ggplot2movies::movies
 
 ## Data exploration
 
+```{r initial exploration, echo = TRUE}
+head(clean_movies)
+dim(clean_movies)
+glimpse(clean_movies)
+class(clean_movies)
+```
+
 The data contains:
 
 - 58,788 movies (rows)
@@ -62,21 +69,27 @@ The data contains:
   - Genre (action, animation, comedy, drama, documentary, romance,
     short)
 
-```{r initial exploration, echo = TRUE}
-## Data initial exploration
-head(movies)
-dim(movies)
-glimpse(movies)
-class(movies)
-```
+## Data tidying and transformation 
 
-## Transform the data
+We tidy the data by:
+
+- trimming whitespaces
+
+- saving as a tibble
+
+- Eliminating the variables "budget" and "mpaa". These contain many
+  `NAs` and empty characters, which is why we did not consider them.
+
+- made sure all numeric variables were considered as numeric
+
+- introducing the possibility of filtering movies that have votes higher
+  than a certain number
 
 ```{r transform the data }
 # A cutoff of on the first quartile
 cutoff_votes <- 0
 
-# Change the datatype 
+#Create a new clean dataset
 clean_movies <- movies |>   
   map(~str_trim(.x)) |>   
   as_tibble() |> 
@@ -99,15 +112,14 @@ overview_decades <- by_decades |> tally(name = "number of movies")
 ```
 
 ```{r save as R objects}
+#Save clean datasets 
 saveRDS(clean_movies, "shiny_sanne/data/clean_movies.rds")
 saveRDS(overview_decades, "shiny_sanne/data/movies_per_decade.rds")
 ```
 
 ## Data manipulation
 
-The variable "budget" contains many `NAs`, the variable "mpaa" also
-contains a lot of empty characters. The genre variables appear to be
-binary, but are loaded in as integers.
+The genre variables appear to be binary, but are loaded in as integers.
 
 We have 7 rows indicating the genre of a movie, movies can have multiple
 genres.
