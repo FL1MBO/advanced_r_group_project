@@ -1,0 +1,86 @@
+---
+title: "3_movie_data_figures_tables"
+output: html_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+### Impact of votes on rating
+
+We want to investigate whether the total number of votes can predict the
+average rating of a movie. We do this by fitting a linear model to the
+data using votes as a predictor of rating.
+
+```{r}
+fit_votes <- 
+  lm(rating ~ 1 + votes, 
+     data = clean_movies) 
+
+summary(fit_votes)
+```
+
+# Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers
+
+```{r}
+plot_lm_votes <- fit_votes %>% 
+  {par(mfrow = c(2, 2));
+    plot(.)}
+```
+
+Although the slope shows a low p-value, the adjusted R^2^ is low
+(0.03139). The diagnostic plots indicate that the data may be not
+linearly distributed or homoscedatic. We can try to fit a better model
+using a log transformation.
+
+```{r}
+fit_votes_log <- 
+  lm(rating ~ 1 + log(votes), 
+     data = clean_movies) 
+
+summary(fit_votes_log)
+
+# Compare the adjusted R^2 of both models
+summary(fit_votes_log)$adj.r.squared - 
+  summary(fit_votes)$adj.r.squared   #log-transformed is higher
+
+# Calculate Akaike's ‘An Information Criterion’ for both models
+AIC(fit_votes, fit_votes_log) 
+```
+
+When we log-transform the votes variable, we obtain a slightly higher
+adjusted R^2^ (0.04227) and the model is better !!worse because it is higher!! according to the AIC
+metric. Even if it remains weak, the correlation between amount of votes
+and rating is better explained by this second model.
+
+We can visualize the two predicted fit lines on the data in a scatter
+plot of average rating against number of votes. Here, the votes are
+colored by the percentage of users who awarded a 10/10 rate.
+
+```{r}
+
+votes_rating_plot <- ggplot(
+  clean_movies, 
+      aes(votes, rating)) +
+      geom_point(aes(color = r10)) +
+  labs(dictionary = c(
+    votes = "Total user votes",
+    rating = "Average rating /10",
+    r10 = "Percentage of 10/10 votes")) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + x, 
+              se = FALSE, 
+              color = "orange3", 
+              linetype = 1) +
+  stat_smooth(method = "lm", 
+              formula = y ~ 1 + log(x), 
+              se = FALSE, 
+              color = "red3", 
+              linetype = 1) + 
+  scale_color_viridis_c()
+
+print(votes_rating_plot)
+```

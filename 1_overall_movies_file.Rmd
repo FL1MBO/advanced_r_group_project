@@ -1,0 +1,188 @@
+---
+title: "1_movie_data_exploration"
+output: html_document
+---
+
+```{r load packages, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2movies)
+```
+
+# Movie dataset
+
+This dataset is taken from the package `ggplot2movies`. [link to the
+description
+online](https://vincentarelbundock.github.io/Rdatasets/doc/ggplot2movies/movies.html)
+
+## The data
+
+There are various ways to use the data from this package. We can load it
+as `ggplot2movies::movies`, however, this does not store it as a
+variable in our environment. So, we can assign it to a variable or we
+can load it using `data` to store it as a variable.
+
+```{r store data as an object, include = FALSE}
+movies <- ggplot2movies::movies
+```
+
+## Data exploration
+
+The data contains:
+
+- 58,788 movies (rows)
+
+- 24 columns:
+
+  - Movie title
+  - Year
+  - Length (minutes)
+  - Budget
+  - Rating
+  - Votes
+  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
+  - MPAA rating
+  - Genre (action, animation, comedy, drama, documentary, romance,
+    short)
+
+```{r initial exploration, echo = TRUE}
+## Data initial exploration
+head(movies)
+dim(movies)
+glimpse(movies)
+class(movies)
+```
+
+
+## Transform the data
+
+```{r transform the data }
+# A cutoff of on the first quartile
+cutoff_votes <- 0
+
+# Change the datatype 
+clean_movies <- movies |>   
+  map(~str_trim(.x)) |>   
+  as_tibble() |> 
+  select(-budget, -mpaa) |> 
+  mutate_at(vars(-title), as.numeric) |>  
+  filter(votes >= cutoff_votes) 
+  
+clean_movies <- clean_movies  |> 
+  mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),
+                  if_else(year %in% seq(1900, 1909, 1), paste0("190",(year - 1900) %/% 10 * 10), 
+                  if_else(year %in% seq(1910, 1999, 1), paste0("19",(year - 1900) %/% 10 * 10), 
+                          "1890")))) |> arrange (year) 
+
+clean_movies$decade <- as.numeric(clean_movies$decade) # add to pipeline above
+
+mean_ratings_decade <- clean_movies |> 
+  group_by(decade) |> 
+  mutate(mean_rating_decade = mean(rating)) 
+
+by_decades <- clean_movies |> group_by(decade)
+
+overview_decades <- by_decades |> tally(name = "number of movies") 
+```
+
+
+```{r save as R objects}
+saveRDS(clean_movies, "shiny_sanne/data/clean_movies.rds")
+saveRDS(overview_decades, "shiny_sanne/data/movies_per_decade.rds")
+```
+
+## Data manipulation
+
+The variable "budget" contains many `NAs`, the variable "mpaa" also
+contains a lot of empty characters. The genre variables appear to be
+binary, but are loaded in as integers.
+
+We have 7 rows indicating the genre of a movie, movies can have multiple
+genres.
+
+## Analysis plan
+
+- We have a group of variables for the distribution of the rating.
+- We have a group of variables for the genres.
+- We have ratings and the number of votes.
+- We have budget (but lots of NAs)
+- We have movie lengths (in minutes)
+
+It would be interesting to see the distribution of the ranks, in
+relation to the number of voters. Then, we also have the information on
+which year the movie was released.
+
+**Ranks**
+
+- How are the votes distributed (across the r1-10)?
+- Can movie length predict scores + how many people watched it.
+
+**Genre**
+
+It would also be interesting to look at the popularity of the genres:
+
+- Which movie genres has the highest overall scores?
+- Which movie genre is voted on most (mean across the movies, min + max)
+- How long are movies across genres (and does this influence the rank?)
+
+**Decades**
+
+Lastly, we can group per decade
+
+- Which genres were popular along the decades?
+- How many votes were there across the decades?
+- Ratings across the decades? (overall, per genre)
+- Did movie lengths change over the years?
+
+These graphs can all be made interactive, with options for choosing
+genres and decades, perhaps also with the possibility to select
+double/triple genres (we will look into the distribution of multiple
+genres), or to select certain years even (along with certain decades).
+
+- Perhaps make it possible to select your own range of release years.
+
+### Data manipulation
+
+- We have 10 rows for the rating (r1 - r10)
+- We have 7 rows indicating the genre of a movie, movies can have
+  multiple genres.
+
+Create subsets based on the movie genres
+
+```{r}
+# add variable decade
+clean_movies <- clean_movies  |> 
+  mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),
+                  if_else(year %in% seq(1900, 1909, 1), paste0("190",(year - 1900) %/% 10 * 10), 
+                  if_else(year %in% seq(1910, 1999, 1), paste0("19",(year - 1900) %/% 10 * 10), 
+                          "1890")))) |> arrange (year) 
+
+clean_movies$decade <- as.numeric(clean_movies$decade)
+
+mean_ratings_decade <- clean_movies |> 
+  group_by(decade) |> 
+  mutate(mean_rating_decade = mean(rating)) 
+
+by_decades <- clean_movies |> group_by(decade)
+
+overview_decades <- by_decades |> tally(name = "number of movies")
+
+saveRDS(clean_movies, "shiny_sanne/data/clean_movies.rds")
+saveRDS(overview_decades, "shiny_sanne/data/movies_per_decade.rds")
+
+table(clean_movies$decades, clean_movies$mean_votes_decade)
+
+```
+
+# Shiny apps 
+```{r}
+library(shiny)
+
+runApp("shiny_sanne")
+
+runApp("app_Luisa")
+
+getwd()
+
+```
