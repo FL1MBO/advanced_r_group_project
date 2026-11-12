@@ -1,3 +1,4 @@
+
 library(shiny)
 library(bslib)
 library(tidyverse)
@@ -173,7 +174,7 @@ This shiny app contains the follow tabs:
   - The plots of the linear model."
   })
   
-  ## Part 2: table with the number of movies per decade
+  ## Part 2: Data Table with all data to search for specific movies and get a feel for it
   output$table_votes <- DT::renderDataTable({
     req(input$votes)
     
@@ -184,7 +185,7 @@ This shiny app contains the follow tabs:
     )}, 
     options = list(packageLength = 20, scrollX = TRUE))
   
-  ## Part 3: add Luisa's table  
+  ## Part 3: Interactive table of the top 10 movies, based on different filters
   output$table_10 <- render_gt({
       movies |>
         select(title, year, rating, votes, genre, length)|>
@@ -213,7 +214,7 @@ This shiny app contains the follow tabs:
         )
     })
   
-  ## Part 4: Interactive plot
+  ## Part 4: Main interactive plot
   output$scatterplot <- renderPlot({
     raw_plot <- movies |>
         filter(
