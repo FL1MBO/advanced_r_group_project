@@ -119,7 +119,8 @@ ui <- page_sidebar(
                                                    "Percentage of 7/10 votes" = "r7",
                                                    "Percentage of 8/10 votes" = "r8",
                                                    "Percentage of 9/10 votes" = "r9",
-                                                   "Percentage of 10/10 votes" = "r10"),
+                                                   "Percentage of 10/10 votes" = "r10",
+                                                   "Genre" = "genre"),
                                        selected = "year")),
 
     navset_card_underline(
