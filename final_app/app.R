@@ -69,27 +69,31 @@ ui <- page_sidebar(
                                                    "Percentage of 9/10 votes" = "r9",
                                                    "Percentage of 10/10 votes" = "r10"),
                                        selected = "year")),
-  navset_card_underline(
-    
-    # Panel with summary text ----
-    nav_panel("Information text", verbatimTextOutput("info_data")),
-    nav_panel("Data table", DT::dataTableOutput("table_votes")),
-    
-    # Panel with table ----
-    nav_panel("Top 10 movies on IMDb", gt_output("table_10")),
-    
-    # Panel with plot per year 
-    nav_panel("Interactive plot", plotOutput("plot_year")),
-    
-    # Panel with regression summary ---
-    nav_panel("Regression", verbatimTextOutput("summary_regression"), verbatimTextOutput("coef_regression")),
-    
-    # Panel with regression plots ---
-    nav_panel("Regression plots", plotOutput("diagnostic_plots")),
-  )
+
+    navset_card_underline(
+                        
+                        # Panel with summary text ----
+                        nav_panel("Summary", verbatimTextOutput("info_data")),
+                        
+                        # Panel with the full data table --- 
+                        nav_panel("Data table ", DT::dataTableOutput("table_votes")),
+                        
+                        # Panel with table of the top 10 movies ----
+                        nav_panel("Table of top 10 movies on IMDb", gt_output("table_10")),
+                        
+                        # Panel with the interactive plot ---
+                        nav_panel("Plot yearly average rating", plotOutput("plot_year")),
+                        
+                        # Panel with regression summary ---
+                        nav_panel("Regression", verbatimTextOutput("summary_regression"), 
+                                  verbatimTextOutput("coef_regression"), 
+                                  verbatimTextOutput("confidence_regression")),
+                        
+                        # Panel with the regression plots ---
+                        nav_panel("Plot regression", plotOutput("diagnostic_plots")),
+
 )
-
-
+)
 
 server <- function(input, output){
   
@@ -156,6 +160,7 @@ This shiny app contains the follow tabs:
           locations = cells_title(groups = "title")
         )
     })
+  
   ## Part 4: plot of the average rating per year
   output$plot_year <- renderPlot({ 
     movies |> filter(
@@ -218,6 +223,7 @@ This shiny app contains the follow tabs:
     formula_regression <- paste("rating ~", all_predictors)
     lm(as.formula(formula_regression), data = clean_movies)
   })
+  
   output$summary_regression <- renderPrint({
     summary(model())
   })
@@ -226,13 +232,20 @@ This shiny app contains the follow tabs:
     coef(model())
   })
   
+  output$confidence_regression <- renderPrint({
+    coef(model(predict(
+      model, 
+      interval = "confidence", 
+      level = 0.95
+    )))
+  })
+  
   output$diagnostic_plots <- renderPlot({
     req(model())
     fit <- model()
     par(mfrow = c(2, 2))
     plot(fit, which = c(1:3, 5))
   })
-  
 }
 
 shinyApp(ui = ui, server = server)
