@@ -17,7 +17,17 @@ ui <- page_sidebar(
   theme = bs_theme(preset = "cerulean"),
   sidebar = sidebar(h4("Filters"),
                     
+                    # Slider input for the range of votes ---
+                    helpText("Adjusting the range of votes change the data table"),
+                    sliderInput(
+                      "votes",
+                      label = "Range of number of votes per movie:",
+                      min = min(clean_movies$votes), max = max(clean_movies$votes), 
+                      value = c(min(clean_movies$votes), max(clean_movies$votes))),
+                    
+                    
                     # Multiple check boxes for the genres ----
+                    helpText("The genre boxes work with the top 10 data and the plot:"),
                     checkboxGroupInput(inputId = "genre",
                                        label = "Choose a genre",
                                        choices = list(
@@ -31,12 +41,6 @@ ui <- page_sidebar(
                                          "Romance" = "Romance"),
                                        selected = genres),
                     
-                    # Slider input for the range of votes ---
-                    sliderInput(
-                      "votes",
-                      label = "Range of interest:",
-                      min = min(clean_movies$votes), max = max(clean_movies$votes), 
-                      value = c(min(clean_movies$votes), max(clean_movies$votes))),
                     
                     # Slider input for the range of years ----
                     sliderInput(inputId ="range_years",
@@ -46,7 +50,8 @@ ui <- page_sidebar(
                                 value = c(1893, 2005),
                                 step = 1,
                                 sep = "" ),
-              
+                    
+                    
                     # Selection for linear model 
                     helpText("Fit a linear model for rating based on:"),
                     checkboxGroupInput("predictor", "Select predictor(s):",
@@ -64,6 +69,7 @@ ui <- page_sidebar(
                                                    "Percentage of 9/10 votes" = "r9",
                                                    "Percentage of 10/10 votes" = "r10"),
                                        selected = "year")),
+<<<<<<< HEAD
   navset_card_underline(title = "Analysis of movie data",
                         
                         # Panel with summary text ----
@@ -81,6 +87,25 @@ ui <- page_sidebar(
                                   verbatimTextOutput("coef_regression"), 
                                   verbatimTextOutput("confidence_regression")),
                         nav_panel("Plot regression", plotOutput("diagnostic_plots")),
+=======
+  navset_card_underline(
+    
+    # Panel with summary text ----
+    nav_panel("Information text", verbatimTextOutput("info_data")),
+    nav_panel("Data table", DT::dataTableOutput("table_votes")),
+    
+    # Panel with table ----
+    nav_panel("Top 10 movies on IMDb", gt_output("table_10")),
+    
+    # Panel with plot per year 
+    nav_panel("Interactive plot", plotOutput("plot_year")),
+    
+    # Panel with regression summary ---
+    nav_panel("Regression", verbatimTextOutput("summary_regression"), verbatimTextOutput("coef_regression")),
+    
+    # Panel with regression plots ---
+    nav_panel("Regression plots", plotOutput("diagnostic_plots")),
+>>>>>>> fc1f062f4dba681dc16ad04fe5423a162f302d22
   )
 )
 
@@ -103,7 +128,13 @@ The data contains 58,788 movies and 24 columns. These columns are:
   - MPAA rating
   - Genre (action, animation, comedy, drama, documentary, romance,
     short)
-The data is can be checked in table in the next tab"
+
+This shiny app contains the follow tabs:
+  - The overall data, which reacts to the range of votes in the slider.
+  - The top 10 movies, which react to the genres selected in the check boxes.
+  - An interactive plot, which reacts to most buttons and sliders.
+  - The summary of a linear model, with rating as the dependent variable. Use the check boxes at the bottom to select the predictors.
+  - The plots of the linear model."
   })
   
   ## Part 2: table with the number of movies per decade
@@ -229,7 +260,7 @@ The data is can be checked in table in the next tab"
     par(mfrow = c(2, 2))
     plot(fit, which = c(1:3, 5))
   })
-
+  
 }
 
 shinyApp(ui = ui, server = server)
