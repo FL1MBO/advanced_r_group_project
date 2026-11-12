@@ -91,7 +91,6 @@ ui <- page_sidebar(
 
 
 
-
 server <- function(input, output){
   
   ## Part 1: information on the data
@@ -238,9 +237,6 @@ This shiny app contains the follow tabs:
 
 shinyApp(ui = ui, server = server)
 
-
-# can create a function for making the plot 
-# (see helpers.R from tutorial)
 
 
 

@@ -1,0 +1,20 @@
+This dataset contains movie ratings for many movies released between 1893 - 2005.
+
+The data contains 58,788 movies and 24 columns. These columns are: 
+  - Movie title
+  - Year
+  - Length (minutes)
+  - Budget
+  - Rating
+  - Votes
+  - r1-10 (percentile per score 1-10, rounded to nearest 10%)
+  - MPAA rating
+  - Genre (action, animation, comedy, drama, documentary, romance,
+    short)
+
+This shiny app contains the follow tabs:
+  - The overall data, which reacts to the range of votes in the slider.
+  - The top 10 movies, which react to the genres selected in the check boxes.
+  - An interactive plot, which reacts to most buttons and sliders.
+  - The summary of a linear model, with rating as the dependent variable. Use the check boxes at the bottom to select the predictors.
+  - The plots of the linear model.
