@@ -180,7 +180,7 @@ This shiny app contains the follow tabs:
     table_votes(data = movies,
                 min = input$votes[1],
                 max = input$votes[2], 
-                cols = c(1, 4:15)
+                cols = c(1, 23, 2, 5, 4, 6:15)
     )}, 
     options = list(packageLength = 20, scrollX = TRUE))
   
