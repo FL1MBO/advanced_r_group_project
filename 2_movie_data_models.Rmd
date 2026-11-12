@@ -59,13 +59,10 @@ data using votes as a predictor of rating.
 fit_votes <- lm(rating ~ 1 + votes, data = clean_movies) 
 
 summary(fit_votes)
-```
 
-# Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers
-
-```{r}
+#Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers
 plot_lm_votes <- fit_votes %>% 
-  {par(mfrow = c(2, 2)); plot(.)}
+    {par(mfrow = c(2, 2)); plot(.)}
 ```
 
 Although the slope shows a low p-value, the adjusted R^2^ is low
@@ -89,10 +86,9 @@ AIC(fit_votes, fit_votes_log)
 ```
 
 When we log-transform the votes variable, we obtain a slightly higher
-adjusted R^2^ (0.04227) and the model is better !!worse because it is
-higher!! according to the AIC metric. Even if it remains weak, the
-correlation between amount of votes and rating is better explained by
-this second model.
+adjusted R^2^ (0.04227). However, the model is better worse according to
+the AIC metric. The weak correlations mean that neither model can
+reliably predict rating based on number of votes.
 
 We can visualize the two predicted fit lines on the data in a scatter
 plot of average rating against number of votes. Here, the votes are
