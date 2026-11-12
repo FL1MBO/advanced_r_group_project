@@ -41,7 +41,7 @@ ui <- page_sidebar(
                                          "Romance" = "Romance"),
                                        selected = genres),
                     
-
+                    
                     # Slider input for the range of years ----
                     sliderInput(inputId ="range_years",
                                 label = "Set the range of year of movie release:",
@@ -50,7 +50,7 @@ ui <- page_sidebar(
                                 value = c(1893, 2005),
                                 step = 1,
                                 sep = "" ),
-              
+                    
                     
                     # Selection for linear model 
                     helpText("Fit a linear model for rating based on:"),
@@ -70,22 +70,22 @@ ui <- page_sidebar(
                                                    "Percentage of 10/10 votes" = "r10"),
                                        selected = "year")),
   navset_card_underline(
-                        
-                        # Panel with summary text ----
-                        nav_panel("Information text", verbatimTextOutput("info_data")),
-                        nav_panel("Data table", DT::dataTableOutput("table_votes")),
-                        
-                        # Panel with table ----
-                        nav_panel("Top 10 movies on IMDb", gt_output("table_10")),
-                        
-                        # Panel with plot per year 
-                        nav_panel("Interactive plot", plotOutput("plot_year")),
-                        
-                        # Panel with regression summary ---
-                        nav_panel("Regression summary", verbatimTextOutput("summary_regression")),
-                        
-                        # Panel with regression plots ---
-                        nav_panel("Regression plots", plotOutput("diagnostic_plots")),
+    
+    # Panel with summary text ----
+    nav_panel("Information text", verbatimTextOutput("info_data")),
+    nav_panel("Data table", DT::dataTableOutput("table_votes")),
+    
+    # Panel with table ----
+    nav_panel("Top 10 movies on IMDb", gt_output("table_10")),
+    
+    # Panel with plot per year 
+    nav_panel("Interactive plot", plotOutput("plot_year")),
+    
+    # Panel with regression summary ---
+    nav_panel("Regression", verbatimTextOutput("summary_regression"), verbatimTextOutput("coef_regression")),
+    
+    # Panel with regression plots ---
+    nav_panel("Regression plots", plotOutput("diagnostic_plots")),
   )
 )
 
@@ -223,13 +223,17 @@ This shiny app contains the follow tabs:
     summary(model())
   })
   
+  output$coef_regression <- renderPrint({
+    coef(model())
+  })
+  
   output$diagnostic_plots <- renderPlot({
     req(model())
     fit <- model()
     par(mfrow = c(2, 2))
     plot(fit, which = c(1:3, 5))
   })
-
+  
 }
 
 shinyApp(ui = ui, server = server)
