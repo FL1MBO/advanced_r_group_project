@@ -78,7 +78,8 @@ ui <- page_sidebar(
                         
                         # Panel with regression information ---
                         nav_panel("Regression", verbatimTextOutput("summary_regression"), 
-                                  verbatimTextOutput("coef_regression")),
+                                  verbatimTextOutput("coef_regression"), 
+                                  verbatimTextOutput("confidence_regression")),
                         nav_panel("Plot regression", plotOutput("diagnostic_plots")),
   )
 )
@@ -213,6 +214,13 @@ The data is can be checked in table in the next tab"
   
   output$coef_regression <- renderPrint({
     coef(model())
+  })
+  output$coef_regression <- renderPrint({
+    coef(model(predict(
+      model, 
+      interval = "confidence", 
+      level = 0.95
+    )))
   })
   
   output$diagnostic_plots <- renderPlot({
