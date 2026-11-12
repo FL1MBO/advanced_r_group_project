@@ -77,7 +77,8 @@ ui <- page_sidebar(
                         nav_panel("Plot yearly average rating", plotOutput("plot_year")),
                         
                         # Panel with regression information ---
-                        nav_panel("Regression", verbatimTextOutput("summary_regression")),
+                        nav_panel("Regression", verbatimTextOutput("summary_regression"), 
+                                  verbatimTextOutput("coef_regression")),
                         nav_panel("Plot regression", plotOutput("diagnostic_plots")),
   )
 )
@@ -208,6 +209,10 @@ The data is can be checked in table in the next tab"
   })
   output$summary_regression <- renderPrint({
     summary(model())
+  })
+  
+  output$coef_regression <- renderPrint({
+    coef(model())
   })
   
   output$diagnostic_plots <- renderPlot({
