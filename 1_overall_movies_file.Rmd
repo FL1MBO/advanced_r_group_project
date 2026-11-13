@@ -15,7 +15,6 @@ library(tidyverse)
 library(ggplot2movies)
 library(shiny)
 library(gt)
-library(stringr)
 library(superheat)
 ```
 
@@ -114,6 +113,10 @@ We tidy the data by:
 # we wanted to be able to change the cutoff later on, but ended up including it as an option in our shiny app instead
 cutoff_votes <- 0
 
+# genre assignment with accounting for multiple assignments per movie instead of labelling them as crosslisted
+genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
+
+
 #Create a new clean dataset
 clean_movies <- movies |>   
   map(~str_trim(.x)) |>   
@@ -129,27 +132,41 @@ clean_movies <- movies |>
                                   Romance == 1 ~ "Romance",
                                   rowSums(pick(Action:Romance)) < 1 ~ "No genre"))) |> 
   filter(votes >= cutoff_votes)|> 
-  mutate(decade = if_else(year %in% seq(2000,2005, 1), paste0(year  %/% 10 * 10),
-                  if_else(year %in% seq(1900, 1909, 1), paste0("190",(year - 1900) %/% 10 * 10), 
-                  if_else(year %in% seq(1910, 1999, 1), paste0("19",(year - 1900) %/% 10 * 10), # introducing decade column
+  mutate(decade = if_else(year %in% seq(2000,2005, 1),
+                          paste0(year  %/% 10 * 10),
+                  if_else(year %in% seq(1900, 1909, 1),
+                          paste0("190",(year - 1900) %/% 10 * 10), 
+                  if_else(year %in% seq(1910, 1999, 1),
+                          paste0("19",(year - 1900) %/% 10 * 10), 
+                          # introducing decade column
                           "1890")))) |> arrange (year) |> 
-  mutate_at(vars(decade), as.numeric)
+  mutate_at(vars(decade), as.numeric) |>
+  mutate(genre_combo = apply(
+         pick(all_of(genres)), 1,
+         \(x) paste(genres[as.logical(x)], collapse = " + ")
+       ),
+       genre_combo = factor(ifelse(genre_combo == "", "None", genre_combo))
+)
+
 
 #Save clean datasets 
 saveRDS(clean_movies, "final_app/data/clean_movies.rds")
+saveRDS(clean_movies, "clean_movies.rds")
 ```
 
 # Analysis
 
 We focus on exploring the different variables of our dataset
-individually and testing whether they can predict the
-rating of a movie.
+individually and testing whether they can predict the rating of a movie.
 
-First, some exploration of highest and lowest rated movies, also in our shiny.
+First, some exploration of highest and lowest rated movies, also in our
+shiny.
 
 ## Highest and lowest rated movies
 
-*Here we consider all the genre combinations, but we made it simpler in the final app*
+*Here we consider all the genre combinations, but we made it simpler in
+the final app*
+
 ```{r}
 vote_cutoff = 1000
 
@@ -231,17 +248,6 @@ saveRDS(mean_ratings_decade, "final_app/data/movies_per_decade.rds")
 ```{r genre table}
 table(factor(clean_movies$genre))  # basic table with number of movies per genre
 
-# genre assignment with accounting for multiple assignments per movie instead of labelling them as crosslisted
-genres <- c("Action", "Animation", "Comedy", "Drama", "Documentary", "Romance")
-
-clean_movies <- mutate(clean_movies,
-    genre_combo = apply(
-      pick(all_of(genres)), 1,
-      \(x) paste(genres[as.logical(x)], collapse = " + ")
-    ),
-    genre_combo = factor(ifelse(genre_combo == "", "None", genre_combo))
-  )
-
 genre_table <- clean_movies |>
   filter(votes > 20) |>
   group_by(genre_combo) |> # either put in genre or genre_combo
@@ -286,7 +292,8 @@ genre_table
 ## Data distributions
 
 The distribution of each relevant numerical variable can be visualized
-in the following density graphs. These are: year, length, rating, and number of votes.
+in the following density graphs. These are: year, length, rating, and
+number of votes.
 
 ```{r}
 clean_movies |> 

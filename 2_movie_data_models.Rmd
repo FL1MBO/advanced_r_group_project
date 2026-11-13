@@ -11,7 +11,9 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(ggplot2)
 library(ggplot2movies)
+
 
 clean_movies <- read_rds("clean_movies.rds")
 ```
@@ -35,10 +37,10 @@ and the rate it received from users, we fit a linear model with year as
 the predictor variable.
 
 ```{r}
-model_year <- lm(mean_rating ~ year, data=clean_movies)
+model_year <- lm(rating ~ year, data=clean_movies)
 summary(model_year)
 
-plot_lm_year <- model_year |> 
+plot_lm_year <- model_year %>% 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
@@ -54,8 +56,6 @@ summary(fit_genre)
 plot(fit_genre)
 ```
 
-
-
 ## 3. Length
 
 We investigate here the correlation between the length and rating of a
@@ -68,7 +68,7 @@ fit_length <-
 summary(fit_length)  
 
 #Visualise diagnostic plots of the linear model in one figure. These assess the criteria of: linearity, homoscedasticity, normality, and absence of outliers 
-plot_lm_length <- fit_length |> 
+plot_lm_length <- fit_length  %>% 
   {par(mfrow = c(2, 2)); plot(.)}
 ```
 
@@ -88,7 +88,7 @@ fit_votes <- lm(rating ~ 1 + votes, data = clean_movies)
 summary(fit_votes)
 
 #Visualise diagnostic plots of the linear model in one figure
-plot_lm_votes <- fit_votes |> 
+plot_lm_votes <- fit_votes  %>%
     {par(mfrow = c(2, 2)); plot(.)}
 ```
 
@@ -145,9 +145,11 @@ votes_rating_plot <- ggplot(
 print(votes_rating_plot)
 ```
 
+# Extra: length and year relationship (just out of curiosity)
 
-# Extra: length and year relationship (just out of curiosity) 
-*assumption of normality does not hold based on Q-Q plot, thus irrelevant result*
+*assumption of normality does not hold based on Q-Q plot, thus
+irrelevant result*
+
 ```{r}
 movies_without_outliers <- filter(clean_movies, length <= 400) # based on visual plot rating vs length on the shiny app, so not really robust
 
