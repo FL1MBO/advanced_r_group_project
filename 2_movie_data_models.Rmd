@@ -1,5 +1,6 @@
 ---
 title: "2_movie_data_models"
+author: "Louisa, Marlene, Sanne"
 output: html_document
 editor_options: 
   markdown: 
@@ -47,10 +48,13 @@ cannot predict rating through a linear model.
 
 ## 2. Genre
 
-```{r}
-
-
+```{r genre}
+fit_genre <- lm(rating ~ genre, data = clean_movies)
+summary(fit_genre)
+plot(fit_genre)
 ```
+
+
 
 ## 3. Length
 
@@ -139,4 +143,15 @@ votes_rating_plot <- ggplot(
   scale_color_viridis_c()
 
 print(votes_rating_plot)
+```
+
+
+# Extra: length and year relationship (just out of curiosity) 
+*assumption of normality does not hold based on Q-Q plot, thus irrelevant result*
+```{r}
+movies_without_outliers <- filter(clean_movies, length <= 400) # based on visual plot rating vs length on the shiny app, so not really robust
+
+fit_length_year <- lm(length ~ year, data = movies_without_outliers)
+summary(fit_length_year)
+plot(fit_length_year)
 ```
