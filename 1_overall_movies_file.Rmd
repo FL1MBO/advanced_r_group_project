@@ -16,12 +16,13 @@ library(ggplot2movies)
 library(shiny)
 library(gt)
 library(stringr)
+library(superheat)
 ```
 
 # Shiny app
 
 ```{r}
-runApp("final_app")
+runApp("final_app", display.mode = "showcase")
 ```
 
 # Movie dataset
